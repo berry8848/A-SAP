@@ -3,10 +3,10 @@
 #include <iostream>
 #include <cmath>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp> //‰æ‘œ“üo—Í•GUI‘€ì—p
-#include <string> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <fstream> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <algorithm> //sortŠÖ”—p
+#include <opencv2/highgui/highgui.hpp> //ç”»åƒå…¥å‡ºåŠ›ï¼†GUIæ“ä½œç”¨
+#include <string> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <fstream> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <algorithm> //sorté–¢æ•°ç”¨
 using namespace std;
 using namespace cv;
 string win_src = "src";
@@ -17,64 +17,75 @@ string win_dst = "dst";
 int main()
 {
     Mat img_src;
-    VideoCapture capture(0);//ƒJƒƒ‰ƒI[ƒvƒ“
+    VideoCapture capture(0);//ã‚«ãƒ¡ãƒ©ã‚ªãƒ¼ãƒ—ãƒ³
     if (!capture.isOpened()) {
         cout << "error" << endl;
         return -1;
     }
 
-    //ƒtƒ@ƒCƒ‹‘‚«‚İ
+    //ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿
     string output_csv_file_path = "Output/result.csv";
-    // ‘‚«‚Şcsvƒtƒ@ƒCƒ‹‚ğŠJ‚­(std::ofstream‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^‚ÅŠJ‚­)
+    // æ›¸ãè¾¼ã‚€csvãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã(std::ofstreamã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã§é–‹ã)
     ofstream ofs_csv_file(output_csv_file_path);
 
-    //ƒR[ƒi[ŒŸo
-    // QlFhttp://opencv.jp/opencv2-x-samples/corner_detection/
-    //‚P–‡‚¾‚¯Ê^‚ğB‚é
-    capture >> img_src; //ƒJƒƒ‰‰f‘œ‚Ì“Ç‚İ‚İ
-    Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    //ã‚³ãƒ¼ãƒŠãƒ¼æ¤œå‡º
+    // å‚è€ƒï¼šhttp://opencv.jp/opencv2-x-samples/corner_detection/
+    //ï¼‘æšã ã‘å†™çœŸã‚’æ’®ã‚‹
+    capture >> img_src; //ã‚«ãƒ¡ãƒ©æ˜ åƒã®èª­ã¿è¾¼ã¿
+    Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
     
-    //ƒOƒŒ[ƒXƒP[ƒ‹•ÏŠ·
+    //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«å¤‰æ›
     Mat gray_img;
     cvtColor(img_src, gray_img, COLOR_BGR2GRAY); 
 
-    //ƒKƒEƒVƒAƒ“ƒtƒBƒ‹ƒ^‚Ì“K—p
+    //ã‚¬ã‚¦ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®é©ç”¨
     Mat gaussian_img;
-    GaussianBlur(gray_img, gaussian_img, Size(9, 9), 0, 0);
+    GaussianBlur(gray_img, gaussian_img, Size(3, 3), 0, 0);
     
-    // ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚Ì“K—p
+    // ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®é©ç”¨
     Mat laplacian_img_raw;
     Laplacian(gaussian_img, laplacian_img_raw, CV_16S, 5);
-    //ƒ‰ƒvƒ‰ƒVƒAƒ“‚ÌŒ‹‰Ê‚ÉABS
-    Mat laplacian_img_abs;
-    cv::convertScaleAbs(laplacian_img_raw, laplacian_img_abs);
+    //convertScaleAbsã®alpha,betaã®å€¤ã‚’æ±ºå®šã™ã‚‹
+    double minValue, maxValue;
+    double alpha, beta;
+    minMaxLoc(laplacian_img_raw, &minValue, &maxValue); //æœ€å¤§æœ€å°ã®ç”»ç´ å€¤ã®å–å¾—
+    alpha = 255 / (maxValue - minValue);
+    beta = -alpha / minValue;
+    cout << "Minimum value: " << minValue << endl;
+    cout << "Maximum value: " << maxValue << endl;
+    cout << "alpha: " << alpha << endl;
+    cout << "beta: " << beta << endl;
 
-    //ƒR[ƒi[‚ÌŒŸo
+    //ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ã®çµæœã«ABS
+    Mat laplacian_img_abs;
+    cv::convertScaleAbs(laplacian_img_raw, laplacian_img_abs, alpha, beta);
+
+    //ã‚³ãƒ¼ãƒŠãƒ¼ã®æ¤œå‡º
     vector<Point2f> corners;
     goodFeaturesToTrack(laplacian_img_abs, corners, 80, 0.01, 30, Mat(), 3, true);
 
-    //// yÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
-    //sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
-    //    return a.y < b.y;
-    //    });
-    //// xÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
-    //sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
-    //    return (a.y == b.y) ? (a.x < b.x) : false;
-    //    });
-    //cout << corners << "\n";
+    // yåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
+    sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
+        return a.y < b.y;
+        });
+    // xåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
+    sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
+        return (a.y == b.y) ? (a.x < b.x) : false;
+        });
+    cout << corners << "\n";
 
-    //// o—Í‰æ‘œ‚Ìì¬
+    //// å‡ºåŠ›ç”»åƒã®ä½œæˆ
     vector<Point2f>::iterator it_corner = corners.begin();
     it_corner = corners.begin();
     for (; it_corner != corners.end(); ++it_corner) {
-        circle(result_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //ŠÖ”‚Ìà–¾ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
+        circle(result_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //é–¢æ•°ã®èª¬æ˜ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
         ofs_csv_file << it_corner->x << ", " << it_corner->y << endl;
         circle(result_img, Point(it_corner->x, it_corner->y), 8, Scalar(0, 255, 0));
     }
     
 
-    // Œ‹‰Ê•\¦
-    //ƒEƒCƒ“ƒhƒE¶¬
+    // çµæœè¡¨ç¤º
+    //ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ç”Ÿæˆ
     namedWindow(win_src, WINDOW_AUTOSIZE);
     namedWindow("gray_img", WINDOW_AUTOSIZE);
     namedWindow("gaussian_img", WINDOW_AUTOSIZE);
@@ -82,12 +93,12 @@ int main()
     namedWindow("laplacian_img_abs", WINDOW_AUTOSIZE);
     namedWindow("result_img", WINDOW_AUTOSIZE);
 
-    imshow(win_src, img_src); //“ü—Í‰æ‘œ‚ğ•\¦
-    imshow("gray_img", gray_img); //ƒOƒŒ[ƒXƒP[ƒ‹‰æ‘œ‚ğ•\¦
-    imshow("gaussian_img", gaussian_img); //•½’R‰»‰æ‘œ‚ğ•\¦
-    imshow("laplacian_img_raw", laplacian_img_raw); //ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚ÌŒ‹‰Êi0`255‚Ì”ÍˆÍ‚Éû‚Ü‚ç‚È‚¢)‚ğ•\¦
-    imshow("laplacian_img_abs", laplacian_img_abs); //ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚ÌŒ‹‰Êi0`255‚Ì”ÍˆÍ‚Éû‚Ü‚é)‚ğ•\¦
-    imshow("result_img", result_img); //Œğ“_ŒŸo‰æ‘œ‚ğ•\¦
+    imshow(win_src, img_src); //å…¥åŠ›ç”»åƒã‚’è¡¨ç¤º
+    imshow("gray_img", gray_img); //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ç”»åƒã‚’è¡¨ç¤º
+    imshow("gaussian_img", gaussian_img); //å¹³å¦åŒ–ç”»åƒã‚’è¡¨ç¤º
+    imshow("laplacian_img_raw", laplacian_img_raw); //ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®çµæœï¼ˆ0ï½255ã®ç¯„å›²ã«åã¾ã‚‰ãªã„)ã‚’è¡¨ç¤º
+    imshow("laplacian_img_abs", laplacian_img_abs); //ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®çµæœï¼ˆ0ï½255ã®ç¯„å›²ã«åã¾ã‚‹)ã‚’è¡¨ç¤º
+    imshow("result_img", result_img); //äº¤ç‚¹æ¤œå‡ºç”»åƒã‚’è¡¨ç¤º
 
     waitKey(0);
 
