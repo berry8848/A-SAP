@@ -41,6 +41,7 @@ int main()
     //ガウシアンフィルタの適用
     Mat gaussian_img;
     GaussianBlur(gray_img, gaussian_img, Size(3, 3), 0, 0);
+    //Mat gaussian_img = gray_img.clone();
     
     // ラプラシアンフィルタの適用
     Mat laplacian_img_raw;
@@ -64,6 +65,14 @@ int main()
     vector<Point2f> corners;
     goodFeaturesToTrack(laplacian_img_abs, corners, 80, 0.01, 30, Mat(), 3, true);
 
+    //座標変換((u, v)→(u, height - v))
+    float height = laplacian_img_abs.rows;
+    vector<Point2f> trans_corners;
+    for (int i = 0; i < trans_corners.size(); i++) {
+        Point2f trans_corner = Point2f(0.0f, height) + trans_corners[i];
+        trans_corners.push_back(trans_corner);
+    }
+
     // y座標が小さい順にソート
     sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
         return a.y < b.y;
@@ -73,6 +82,17 @@ int main()
         return (a.y == b.y) ? (a.x < b.x) : false;
         });
     cout << corners << "\n";
+
+    // y座標が小さい順にソート
+    sort(trans_corners.begin(), trans_corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
+        return a.y < b.y;
+        });
+    // x座標が小さい順にソート
+    sort(trans_corners.begin(), trans_corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
+        return (a.y == b.y) ? (a.x < b.x) : false;
+        });
+    cout << trans_corners << "\n";
+
 
     //// 出力画像の作成
     vector<Point2f>::iterator it_corner = corners.begin();
