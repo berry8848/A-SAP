@@ -2,19 +2,19 @@
 #define _USE_MATH_DEFINES
 #include <iostream>
 #include <cmath>
-#include <bitset> //×ü‰»(Hilditch‚Ì•û–@)—p
+#include <bitset> //ç´°ç·šåŒ–(Hilditchã®æ–¹æ³•)ç”¨
 #include <opencv2/opencv.hpp>
 //#include <opencv2/ximgproc.hpp>
-#include <opencv2/highgui/highgui.hpp> //‰æ‘œ“üo—Í•GUI‘€ì—p
-#include <string> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <fstream> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <algorithm> //sortŠÖ”—p
+#include <opencv2/highgui/highgui.hpp> //ç”»åƒå…¥å‡ºåŠ›ï¼†GUIæ“ä½œç”¨
+#include <string> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <fstream> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <algorithm> //sorté–¢æ•°ç”¨
 using namespace std;
 using namespace cv;
 string win_src = "src";
 string win_dst = "dst";
 
-//×ü‰»(Zhang-Suen‚Ì•û–@)
+//ç´°ç·šåŒ–(Zhang-Suenã®æ–¹æ³•)
 void thinningIte(Mat& img, int pattern) {
 
     Mat del_marker = Mat::ones(img.size(), CV_8UC1);
@@ -60,10 +60,10 @@ void thinningIte(Mat& img, int pattern) {
 
     img &= del_marker;
 }
-//×ü‰»(Zhang-Suen‚Ì•û–@‚Ì‘±‚«)
+//ç´°ç·šåŒ–(Zhang-Suenã®æ–¹æ³•ã®ç¶šã)
 void thinning(const Mat& src, Mat& dst) {
     dst = src.clone();
-    dst /= 255;         // 0‚Í0 , 1ˆÈã‚Í1‚É•ÏŠ·‚³‚ê‚é
+    dst /= 255;         // 0ã¯0 , 1ä»¥ä¸Šã¯1ã«å¤‰æ›ã•ã‚Œã‚‹
 
     Mat prev = Mat::zeros(dst.size(), CV_8UC1);
     Mat diff;
@@ -78,7 +78,7 @@ void thinning(const Mat& src, Mat& dst) {
     dst *= 255;
 }
 
-//×ü‰»(Hilditch‚Ì•û–@)
+//ç´°ç·šåŒ–(Hilditchã®æ–¹æ³•)
 void hilditchThinning(const unsigned char* src, unsigned char* dst, int w, int h)
 {
     int offset[9][2] = { {0,0}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1}, {1,1} };
@@ -228,7 +228,7 @@ void hilditchThinning(const unsigned char* src, unsigned char* dst, int w, int h
     cout << " Done! Time: " << (double)(endTime) / CLOCKS_PER_SEC << " sec, Num Path: " << path << endl;
 }
 
-//×ü‰»(ChatGPT)
+//ç´°ç·šåŒ–(ChatGPT)
 void thinning2(cv::Mat& image) {
     cv::Mat prevImage;
     cv::Mat diffImage;
@@ -264,7 +264,7 @@ void thinning2(cv::Mat& image) {
     } while (cv::countNonZero(diffImage) > 0);
 }
 
-//×ü‰»(Hit-or-Miss•ÏŠ· by ChatGPT)
+//ç´°ç·šåŒ–(Hit-or-Misså¤‰æ› by ChatGPT)
 cv::Mat hitOrMiss(const cv::Mat& image, const cv::Mat& kernel) {
     cv::Mat result = cv::Mat::zeros(image.size(), CV_8U);
 
@@ -280,7 +280,7 @@ cv::Mat hitOrMiss(const cv::Mat& image, const cv::Mat& kernel) {
     return result;
 }
 
-//×ü‰»(ƒƒhƒiƒ€–@ by ChatGPT)
+//ç´°ç·šåŒ–(ãƒ¡ãƒ‰ãƒŠãƒ æ³• by ChatGPT)
 cv::Mat medialAxisTransform(const cv::Mat& binaryImage) {
     cv::Mat distanceMap;
     cv::distanceTransform(binaryImage, distanceMap, cv::DIST_L2, cv::DIST_MASK_PRECISE);
@@ -296,7 +296,7 @@ cv::Mat medialAxisTransform(const cv::Mat& binaryImage) {
     return medialAxis;
 }
 
-//×ü‰»(Hilditch–@ by ChatGPT)
+//ç´°ç·šåŒ–(Hilditchæ³• by ChatGPT)
 cv::Mat hilditchThinning(const cv::Mat& binaryImage) {
     cv::Mat skeleton = binaryImage.clone();
     cv::Mat prevSkeleton;
@@ -334,7 +334,7 @@ cv::Mat hilditchThinning(const cv::Mat& binaryImage) {
     return skeleton;
 }
 
-//×ü‰»(“c‘º‚Ì•û–@ by ChatGPT)
+//ç´°ç·šåŒ–(ç”°æ‘ã®æ–¹æ³• by ChatGPT)
 Mat tamuraThinning(const Mat& binaryImage) {
     Mat skeleton = binaryImage.clone();
     Mat prevSkeleton;
@@ -373,9 +373,9 @@ Mat tamuraThinning(const Mat& binaryImage) {
     return skeleton;
 }
 
-//ƒlƒKƒ|ƒW•ÏŠ·
+//ãƒã‚¬ãƒã‚¸å¤‰æ›
 void convertToPositive(cv::Mat& image) {
-    // ‰æ‘œ‚ÌŠeƒsƒNƒZƒ‹‚ÉƒAƒNƒZƒX‚µ‚ÄƒlƒKƒ|ƒW•ÏŠ·‚ğs‚¤
+    // ç”»åƒã®å„ãƒ”ã‚¯ã‚»ãƒ«ã«ã‚¢ã‚¯ã‚»ã‚¹ã—ã¦ãƒã‚¬ãƒã‚¸å¤‰æ›ã‚’è¡Œã†
     for (int i = 0; i < image.rows; i++) {
         for (int j = 0; j < image.cols; j++) {
             cv::Vec3b& pixel = image.at<cv::Vec3b>(i, j);
@@ -392,13 +392,13 @@ int main()
     Mat img_src, img_dst;
     Mat gray_img;
     Mat edge;
-    VideoCapture capture(0);//ƒJƒƒ‰ƒI[ƒvƒ“
+    VideoCapture capture(0);//ã‚«ãƒ¡ãƒ©ã‚ªãƒ¼ãƒ—ãƒ³
     if (!capture.isOpened()) {
         cout << "error" << endl;
         return -1;
     }
 
-    //ƒEƒCƒ“ƒhƒE¶¬
+    //ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ç”Ÿæˆ
     namedWindow(win_src, WINDOW_AUTOSIZE);
     namedWindow("Harris", WINDOW_AUTOSIZE);
     namedWindow("gaussian_img", WINDOW_AUTOSIZE);
@@ -407,67 +407,67 @@ int main()
     //namedWindow("thres_binary", WINDOW_AUTOSIZE);
     //namedWindow("img_thinning", WINDOW_AUTOSIZE);
 
-    //ƒtƒ@ƒCƒ‹‘‚«‚İ
+    //ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿
     string output_csv_file_path = "Output/result.csv";
-    // ‘‚«‚Şcsvƒtƒ@ƒCƒ‹‚ğŠJ‚­(std::ofstream‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^‚ÅŠJ‚­)
+    // æ›¸ãè¾¼ã‚€csvãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã(std::ofstreamã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã§é–‹ã)
     ofstream ofs_csv_file(output_csv_file_path);
 
-    //ƒR[ƒi[ŒŸo
-    // QlFhttp://opencv.jp/opencv2-x-samples/corner_detection/
-    //‚P–‡‚¾‚¯Ê^‚ğB‚é
-    capture >> img_src; //ƒJƒƒ‰‰f‘œ‚Ì“Ç‚İ‚İ
+    //ã‚³ãƒ¼ãƒŠãƒ¼æ¤œå‡º
+    // å‚è€ƒï¼šhttp://opencv.jp/opencv2-x-samples/corner_detection/
+    //ï¼‘æšã ã‘å†™çœŸã‚’æ’®ã‚‹
+    capture >> img_src; //ã‚«ãƒ¡ãƒ©æ˜ åƒã®èª­ã¿è¾¼ã¿
     Mat harris_img = img_src.clone();
 
     cvtColor(img_src, gray_img, COLOR_BGR2GRAY);
     GaussianBlur(gray_img, gray_img, Size(9, 9), 0, 0);
     Mat gaussian_img = gray_img.clone();
-    // ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚Ì“K—p
+    // ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®é©ç”¨
     cv::Mat laplacian_img;
     cv::Laplacian(gray_img, laplacian_img, CV_16S, 5);
     cv::Mat a = laplacian_img.clone();
     cv::convertScaleAbs(laplacian_img, laplacian_img);
     //normalize(gray_img, gray_img, 0, 255, NORM_MINMAX);
 
-    //×ü‰»(OpenCVŠg’£ƒ‚ƒWƒ…[ƒ‹)
+    //ç´°ç·šåŒ–(OpenCVæ‹¡å¼µãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«)
     //ximgproc::thinning(gray_img, gray_img);
 
-    //×ü‰»(Zhang-Suen)
+    //ç´°ç·šåŒ–(Zhang-Suen)
     //threshold(gray_img, gray_img, 180, 255, THRESH_BINARY);
-    ////// ƒlƒKƒ|ƒW•ÏŠ·‚ğs‚¤
+    ////// ãƒã‚¬ãƒã‚¸å¤‰æ›ã‚’è¡Œã†
     //convertToPositive(gray_img);
     //Mat img_thres_binary = gray_img.clone();
     //thinning(gray_img, gray_img);
 
-    //×ü‰»(ChatGPT)
-    // 2’l‰»ˆ—‚ğs‚¤i”CˆÓ‚Ìè‡’l‚ğw’èj
+    //ç´°ç·šåŒ–(ChatGPT)
+    // 2å€¤åŒ–å‡¦ç†ã‚’è¡Œã†ï¼ˆä»»æ„ã®é–¾å€¤ã‚’æŒ‡å®šï¼‰
     //cv::threshold(gray_img, gray_img, 35,255, cv::THRESH_BINARY);
     //thinning2(gray_img);
 
-    //×ü‰»(Hilditch‚Ì•û–@)
+    //ç´°ç·šåŒ–(Hilditchã®æ–¹æ³•)
     //unsigned char convertedImage;
     //gray_img.convertTo(convertedImage, CV_8UC1);
     //hilditchThinning(gray_img, gray_img, gray_img.cols, gray_img.rows);
 
-    //×ü‰»(Hit-or-Miss•ÏŠ· by ChatGPT)
-    //“®‚©‚È‚¢
+    //ç´°ç·šåŒ–(Hit-or-Misså¤‰æ› by ChatGPT)
+    //å‹•ã‹ãªã„
     //threshold(gray_img, gray_img, 128, 255, THRESH_BINARY);
     //Mat img_thres_binary = gray_img.clone();
-    //Mat kernel = (cv::Mat_<char>(3, 3) << 0, -1, 0, 1, 1, 1, 0, -1, 0); // ƒJ[ƒlƒ‹ƒpƒ^[ƒ“‚ğ’è‹`
+    //Mat kernel = (cv::Mat_<char>(3, 3) << 0, -1, 0, 1, 1, 1, 0, -1, 0); // ã‚«ãƒ¼ãƒãƒ«ãƒ‘ã‚¿ãƒ¼ãƒ³ã‚’å®šç¾©
     //gray_img = hitOrMiss(gray_img, kernel);
 
-    //×ü‰»(ƒƒhƒiƒ€–@ by ChatGPT)
-    // ×ü‰»‚³‚ê‚é‚ªAƒIƒuƒWƒFƒNƒg‚Ì—¼’[‚ğŒŸo‚µ‚Ä‚µ‚Ü‚¤
+    //ç´°ç·šåŒ–(ãƒ¡ãƒ‰ãƒŠãƒ æ³• by ChatGPT)
+    // ç´°ç·šåŒ–ã•ã‚Œã‚‹ãŒã€ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ä¸¡ç«¯ã‚’æ¤œå‡ºã—ã¦ã—ã¾ã†
     //threshold(gray_img, gray_img, 128, 255, cv::THRESH_BINARY);
     //Mat img_thres_binary = gray_img.clone();
     //gray_img = medialAxisTransform(gray_img);
 
-    //×ü‰»(Hilditch–@ by ChatGPT)
-    //×ü‰»‚³‚ê‚È‚¢
+    //ç´°ç·šåŒ–(Hilditchæ³• by ChatGPT)
+    //ç´°ç·šåŒ–ã•ã‚Œãªã„
     //threshold(gray_img, gray_img, 180, 255, cv::THRESH_BINARY);
     //Mat img_thres_binary = gray_img.clone();
     //gray_img = hilditchThinning(gray_img);
 
-    //×ü‰»(“c‘º‚Ì•û–@ by ChatGPT)
+    //ç´°ç·šåŒ–(ç”°æ‘ã®æ–¹æ³• by ChatGPT)
     //threshold(gray_img, gray_img, 120, 255, cv::THRESH_BINARY);
     //Mat img_thres_binary = gray_img.clone();
     //gray_img = tamuraThinning(gray_img);
@@ -478,32 +478,32 @@ int main()
 
 
     vector<Point2f> corners;
-    goodFeaturesToTrack(laplacian_img, corners, 80, 0.01, 30, Mat(), 3, true); //ƒR[ƒi[‚ÌŒŸo
+    goodFeaturesToTrack(laplacian_img, corners, 80, 0.01, 30, Mat(), 3, true); //ã‚³ãƒ¼ãƒŠãƒ¼ã®æ¤œå‡º
 
-    // yÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
+    // yåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
     sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
         return a.y < b.y;
         });
-    // xÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
+    // xåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
     sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
         return (a.y == b.y) ? (a.x < b.x) : false;
         });
     cout << corners << "\n";
 
-    // o—Í‰æ‘œ‚Ìì¬
+    // å‡ºåŠ›ç”»åƒã®ä½œæˆ
     vector<Point2f>::iterator it_corner = corners.begin();
     it_corner = corners.begin();
     for (; it_corner != corners.end(); ++it_corner) {
-        circle(harris_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //ŠÖ”‚Ìà–¾ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
+        circle(harris_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //é–¢æ•°ã®èª¬æ˜ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
         ofs_csv_file << it_corner->x << ", " << it_corner->y << endl;
         circle(harris_img, Point(it_corner->x, it_corner->y), 8, Scalar(0, 255, 0));
     }
 
-    imshow(win_src, img_src); //“ü—Í‰æ‘œ‚ğ•\¦
-    imshow("Harris", harris_img); //o—Í‰æ‘œ‚ğ•\¦
-    imshow("gaussian_img", gaussian_img); //o—Í‰æ‘œ‚ğ•\¦
-    imshow("laplacian_img", laplacian_img); //o—Í‰æ‘œ‚ğ•\¦
-    imshow("a", a); //o—Í‰æ‘œ‚ğ•\¦
+    imshow(win_src, img_src); //å…¥åŠ›ç”»åƒã‚’è¡¨ç¤º
+    imshow("Harris", harris_img); //å‡ºåŠ›ç”»åƒã‚’è¡¨ç¤º
+    imshow("gaussian_img", gaussian_img); //å‡ºåŠ›ç”»åƒã‚’è¡¨ç¤º
+    imshow("laplacian_img", laplacian_img); //å‡ºåŠ›ç”»åƒã‚’è¡¨ç¤º
+    imshow("a", a); //å‡ºåŠ›ç”»åƒã‚’è¡¨ç¤º
     //imshow("thres_binary", img_thres_binary);
     //imshow("img_thinning", img_thinning);
     waitKey(0);
