@@ -93,10 +93,6 @@ int main()
     minMaxLoc(laplacian_img_raw, &minValue, &maxValue); //最大最小の画素値の取得
     alpha = 255 / (maxValue - minValue);
     beta = -alpha / minValue;
-    cout << "Minimum value: " << minValue << endl;
-    cout << "Maximum value: " << maxValue << endl;
-    cout << "alpha: " << alpha << endl;
-    cout << "beta: " << beta << endl;
 
     //ラプラシアンの結果にABS
     Mat laplacian_img_abs;
