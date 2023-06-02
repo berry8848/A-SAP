@@ -11,47 +11,24 @@ using namespace std;
 using namespace cv;
 string win_src = "src";
 string win_dst = "dst";
-#define SEACH_VALUE 40
+#define SEARCH_RANGE 2
 #define NUMBER_OF_CORNERS 24
+#define NUMBER_OF_MASTERS 6
 
-//reference_pointに一番近い点を返す関数
-Point2f getClosestPoint(const vector<Point2f>& points, Point2f& reference_point) {
-    Point2f closestPoint; //基準点に一番近い点を格納
-    float minDistance = numeric_limits<float>::max();
-    // 各座標と原点との距離を計算し、最小距離の座標を取得
-    for (const Point2f& point : points) {
-        float distance = sqrt(pow(point.x - reference_point.x, 2) + pow(point.y - reference_point.y, 2));
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestPoint = point;
-        }
-    }
-    return closestPoint;
-}
-
-//reference_pointを基準とし、rangeに含まれる点列をpointsから抽出し、x座標の小さい順にsortした結果を返す
-vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& reference_point, double range) {
-    vector<Point2f> range_points; //range内に含まれる点列格納用
-    // rangeに含まれる点列の抽出
-    for (const Point2f& point : points) {
-        if (reference_point.y - range / 2 < point.y && point.y < reference_point.y + range / 2) {
-            range_points.push_back(point);
-        }
-    }
-    // x座標が小さい順にソート
-    sort(range_points.begin(), range_points.end(), [](const Point2f& a, const Point2f& b) {
-        return a.x < b.x;
-        });
-
-    return range_points;
-}
 
 //範囲内で0以外の値を取るラベルを返す
-int searchLabelInRange(const Point2f& center, Mat& labels) {
-    for (int x = center.x - SEACH_VALUE; x <= center.x + SEACH_VALUE; ++x) {
-        for (int y = center.y - SEACH_VALUE; y <= center.y + SEACH_VALUE; ++y) {
-            if (labels.at<int>(x, y) != 0) {
-                return labels.at<int>(x, y);
+int searchLabelInRange(const Point2f& corner, Mat& labels, vector<vector<Point2f>>& master_labels) {
+    // 画像の幅と高さを取得
+    int width = labels.cols;
+    int height = labels.rows;
+
+    for (int x = corner.x - SEARCH_RANGE; x <= corner.x + SEARCH_RANGE; ++x) {
+        for (int y = corner.y - SEARCH_RANGE; y <= corner.y + SEARCH_RANGE; ++y) {
+            if (x < 0 || width <= x || y < 0 || height <= y) continue;
+            int label_num = labels.at<int>(y, x);
+            if (label_num != 0) {
+                master_labels[label_num - 1.0].push_back(corner);
+                return label_num;
             }
         }
     }
@@ -59,25 +36,44 @@ int searchLabelInRange(const Point2f& center, Mat& labels) {
     return 0;
 }
 
+//各行の列のサイズを確認し，指定した列のサイズ以外の時エラーメッセージを表示
+void checkColumnSize(const vector<vector<Point2f>>& matrix) {
+    int expectedSize = NUMBER_OF_CORNERS / NUMBER_OF_MASTERS;
+    for (int targetRow = 0; targetRow < matrix.size(); ++targetRow) {
+        int actualColumnSize = matrix[targetRow].size();  // 列のサイズは最初の行の要素数とする
+        if (actualColumnSize != expectedSize) {
+            cout << "ERROR: Row " << targetRow << " は期待しているサイズ数ではありません．" << endl;
+        }
+    }
+}
 
 int main()
 {
-    Mat img_src;
-    VideoCapture capture(0);//カメラオープン
-    if (!capture.isOpened()) {
-        cout << "error" << endl;
-        return -1;
-    }
-
     //ファイル書き込み
     string output_csv_file_path = "Output/result.csv";
     // 書き込むcsvファイルを開く(std::ofstreamのコンストラクタで開く)
     ofstream ofs_csv_file(output_csv_file_path);
 
-    //コーナー検出
-    // 参考：http://opencv.jp/opencv2-x-samples/corner_detection/
-    //１枚だけ写真を撮る
-    capture >> img_src; //カメラ映像の読み込み
+    Mat img_src;
+    //VideoCapture capture(0);//カメラオープン
+    //if (!capture.isOpened()) {
+    //    cout << "error" << endl;
+    //    return -1;
+    //}
+    ////コーナー検出
+    //// 参考：http://opencv.jp/opencv2-x-samples/corner_detection/
+    ////１枚だけ写真を撮る ※現在，画像の読み込みに変更
+    //capture >> img_src; //カメラ映像の読み込み
+    //Mat result_img = img_src.clone(); //出力画像用 
+
+    // 画像ファイルのパス
+    string filename = "image.jpg";
+    // 画像を読み込む
+    img_src = imread(filename);
+    if (img_src.empty()) {
+        cout << "Failed to load the image: " << filename << endl;
+        return -1;
+    }
     Mat result_img = img_src.clone(); //出力画像用 
 
     //グレースケール変換
@@ -126,18 +122,29 @@ int main()
     //領域分割
     Mat labels, stats, centroids;
     int num_objects = connectedComponentsWithStats(inverted_binary_img, labels, stats, centroids);
-    cout << "labels: " << labels.at<int>(20, 10) << endl;
+    cout << "labels.at<int>(200, 100): " << labels.at<int>(200, 100) << endl;
+    cout << "labels.at<int>(0, 0): " << labels.at<int>(0, 0) << endl;
     cout << "stats: " << stats << endl;
 
     //コーナーのラベル付け
     int corner_labels[NUMBER_OF_CORNERS];
+    vector<vector<Point2f>> master_labels(NUMBER_OF_MASTERS, vector<Point2f>(0));
     for (int i = 0; i < NUMBER_OF_CORNERS; i++) {
-        //cout << "corners: " << corners.at(i) << endl;
-        corner_labels[i] = searchLabelInRange(corners.at(i), labels);
+        corner_labels[i] = searchLabelInRange(corners.at(i), labels, master_labels);
         cout << "corner_labels: " << corner_labels[i] << endl;
     }
 
-    //// 出力画像の作成
+    //正常にラベル付けできているかを確認
+    checkColumnSize(master_labels);
+
+    // 値の表示
+    for (int i = 0; i < master_labels.size(); ++i) {
+        for (int j = 0; j < master_labels[i].size(); ++j) {
+            cout << "master_labels[" << i << "][" << j << "]: (" << master_labels[i][j].x << ", " << master_labels[i][j].y << ")" << endl;
+        }
+    }
+
+    // 出力画像の作成
     vector<Point2f>::iterator it_corner = corners.begin();
     it_corner = corners.begin();
     for (; it_corner != corners.end(); ++it_corner) {
@@ -170,6 +177,6 @@ int main()
 
     waitKey(0);
 
-    capture.release();
+    //capture.release();
     return 0;
 }
