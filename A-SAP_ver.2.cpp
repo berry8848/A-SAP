@@ -46,22 +46,31 @@ vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& referenc
 
 int main()
 {
-    Mat img_src;
-    VideoCapture capture(0);//カメラオープン
-    if (!capture.isOpened()) {
-        cout << "error" << endl;
-        return -1;
-    }
-
     //ファイル書き込み
     string output_csv_file_path = "Output/result.csv";
     // 書き込むcsvファイルを開く(std::ofstreamのコンストラクタで開く)
     ofstream ofs_csv_file(output_csv_file_path);
 
-    //コーナー検出
-    // 参考：http://opencv.jp/opencv2-x-samples/corner_detection/
-    //１枚だけ写真を撮る
-    capture >> img_src; //カメラ映像の読み込み
+    Mat img_src;
+    //VideoCapture capture(0);//カメラオープン
+    //if (!capture.isOpened()) {
+    //    cout << "error" << endl;
+    //    return -1;
+    //}
+    ////コーナー検出
+    //// 参考：http://opencv.jp/opencv2-x-samples/corner_detection/
+    ////１枚だけ写真を撮る ※現在，画像の読み込みに変更
+    //capture >> img_src; //カメラ映像の読み込み
+    //Mat result_img = img_src.clone(); //出力画像用 
+
+    // 画像ファイルのパス
+    string filename = "image.jpg";
+    // 画像を読み込む
+    img_src = imread(filename);
+    if (img_src.empty()) {
+        cout << "Failed to load the image: " << filename << endl;
+        return -1;
+    }
     Mat result_img = img_src.clone(); //出力画像用 
 
     //グレースケール変換
@@ -175,8 +184,19 @@ int main()
     imshow("laplacian_img_abs", laplacian_img_abs); //ラプラシアンフィルタの結果（0～255の範囲に収まる)を表示
     imshow("result_img", result_img); //交点検出画像を表示
 
+    // 画像を保存する
+    std::string filename1 = "gray_img.jpg";
+    std::string filename2 = "gaussian_img.jpg";
+    std::string filename3 = "laplacian_img_abs.jpg";
+    std::string filename4 = "result_img.jpg";
+    bool success1 = cv::imwrite(filename1, gray_img);
+    bool success2 = cv::imwrite(filename2, gaussian_img);
+    bool success3 = cv::imwrite(filename3, laplacian_img_abs);
+    bool success4 = cv::imwrite(filename4, result_img);
+    
+
     waitKey(0);
 
-    capture.release();
+    //capture.release();
     return 0;
 }
