@@ -478,7 +478,7 @@ int main()
 
 
     vector<Point2f> corners;
-    goodFeaturesToTrack(laplacian_img, corners, 80, 0.01, 30, Mat(), 3, true); //コーナーの検出
+    goodFeaturesToTrack(laplacian_img, corners, 80, 0.01, 70, Mat(), 3, true); //コーナーの検出
 
     // y座標が小さい順にソート
     sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
@@ -506,6 +506,9 @@ int main()
     imshow("a", a); //出力画像を表示
     //imshow("thres_binary", img_thres_binary);
     //imshow("img_thinning", img_thinning);
+
+    std::string filename1 = "harris_img.jpg";
+    bool success1 = cv::imwrite(filename1, harris_img);
     waitKey(0);
 
     capture.release();
