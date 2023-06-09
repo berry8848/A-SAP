@@ -51,20 +51,21 @@ vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& referenc
 //背景領域を除いた領域のうち，上からNUMBER_OF_DOTS個だけ，大きい領域のラベル番号を抽出
  vector<int> extractLabels(Mat& matrix){
     vector<int> extract_labels(NUMBER_OF_DOTS); //抽出したラベル番号用．ドットの数だけ箱を用意．
-    int max_current = matrix.at<int>(1, 4);
+    int max_current = 1000000;
     int dot_label_num = 0; //n番目に大きい要素のラベル番号格納用．
 
     for (int i = 0; i < NUMBER_OF_DOTS; i++){
-
+        int max = 0;
         //背景領域（ラベル0）をのぞいたi番目に大きい要素を探索
         for (int j = 1; j < matrix.rows; j++) {
-            if (max_current < matrix.at<int>(j, 4))
+            if (max < matrix.at<int>(j, 4) && matrix.at<int>(j, 4) < max_current)
             {  
-                max_current = matrix.at<int>(j, 4);
+                max = matrix.at<int>(j, 4);
                 dot_label_num = j;
             }
         }
-        extract_labels[i] = dot_label_num;        
+        extract_labels[i] = dot_label_num;
+        max_current = matrix.at<int>(dot_label_num, 4);
     }
     
     return extract_labels;
@@ -144,6 +145,7 @@ int main()
     //    }
     //}
 
+
     //画素値を反転
     Mat inverted_binary_img = 255 - binary_img;
 
@@ -152,7 +154,7 @@ int main()
     int num_objects = connectedComponentsWithStats(inverted_binary_img, labels, stats, centroids);
     cout << "labels.at<int>(200, 100): " << labels.at<int>(200, 100) << endl;
     cout << "labels.at<int>(0, 0): " << labels.at<int>(0, 0) << endl;
-    cout << "stats: " << stats.rows << endl;
+    cout << "stats: " << stats << endl;
 
     vector<int> extract_labels = extractLabels(stats); //背景領域を除いた領域のうち，上からNUMBER_OF_DOTS個だけ，大きい領域のラベル番号を抽出
 
