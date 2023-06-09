@@ -3,20 +3,23 @@
 #include <iostream>
 #include <cmath>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp> //‰æ‘œ“üo—Í•GUI‘€ì—p
-#include <string> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <fstream> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <algorithm> //sortŠÖ”—p
+#include <opencv2/highgui/highgui.hpp> //ç”»åƒå…¥å‡ºåŠ›ï¼†GUIæ“ä½œç”¨
+#include <string> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <fstream> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <algorithm> //sorté–¢æ•°ç”¨
 using namespace std;
 using namespace cv;
 string win_src = "src";
 string win_dst = "dst";
+#define THRESHOLD 128
+#define NUMBER_OF_DOTS 25
 
-//reference_point‚Éˆê”Ô‹ß‚¢“_‚ğ•Ô‚·ŠÖ”
+
+//reference_pointã«ä¸€ç•ªè¿‘ã„ç‚¹ã‚’è¿”ã™é–¢æ•°
 Point2f getClosestPoint(const vector<Point2f>& points, Point2f& reference_point) {
-    Point2f closestPoint; //Šî€“_‚Éˆê”Ô‹ß‚¢“_‚ğŠi”[
+    Point2f closestPoint; //åŸºæº–ç‚¹ã«ä¸€ç•ªè¿‘ã„ç‚¹ã‚’æ ¼ç´
     float minDistance = numeric_limits<float>::max();
-    // ŠeÀ•W‚ÆŒ´“_‚Æ‚Ì‹——£‚ğŒvZ‚µAÅ¬‹——£‚ÌÀ•W‚ğæ“¾
+    // å„åº§æ¨™ã¨åŸç‚¹ã¨ã®è·é›¢ã‚’è¨ˆç®—ã—ã€æœ€å°è·é›¢ã®åº§æ¨™ã‚’å–å¾—
     for (const Point2f& point : points) {
         float distance = sqrt(pow(point.x - reference_point.x, 2) + pow(point.y - reference_point.y, 2));
         if (distance < minDistance) {
@@ -27,16 +30,16 @@ Point2f getClosestPoint(const vector<Point2f>& points, Point2f& reference_point)
     return closestPoint;
 }
 
-//reference_point‚ğŠî€‚Æ‚µArange‚ÉŠÜ‚Ü‚ê‚é“_—ñ‚ğpoints‚©‚ç’Šo‚µAxÀ•W‚Ì¬‚³‚¢‡‚Ésort‚µ‚½Œ‹‰Ê‚ğ•Ô‚·
+//reference_pointã‚’åŸºæº–ã¨ã—ã€rangeã«å«ã¾ã‚Œã‚‹ç‚¹åˆ—ã‚’pointsã‹ã‚‰æŠ½å‡ºã—ã€xåº§æ¨™ã®å°ã•ã„é †ã«sortã—ãŸçµæœã‚’è¿”ã™
 vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& reference_point, double range) {
-    vector<Point2f> range_points; //range“à‚ÉŠÜ‚Ü‚ê‚é“_—ñŠi”[—p
-    // range‚ÉŠÜ‚Ü‚ê‚é“_—ñ‚Ì’Šo
+    vector<Point2f> range_points; //rangeå†…ã«å«ã¾ã‚Œã‚‹ç‚¹åˆ—æ ¼ç´ç”¨
+    // rangeã«å«ã¾ã‚Œã‚‹ç‚¹åˆ—ã®æŠ½å‡º
     for (const Point2f& point : points) {
         if (reference_point.y - range / 2 < point.y && point.y < reference_point.y + range / 2) {
             range_points.push_back(point);
         }
     }
-    // xÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
+    // xåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
     sort(range_points.begin(), range_points.end(), [](const Point2f& a, const Point2f& b) {
         return a.x < b.x;
         });
@@ -44,155 +47,219 @@ vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& referenc
     return range_points;
 }
 
+
+//èƒŒæ™¯é ˜åŸŸã‚’é™¤ã„ãŸé ˜åŸŸã®ã†ã¡ï¼Œä¸Šã‹ã‚‰NUMBER_OF_DOTSå€‹ã ã‘ï¼Œå¤§ãã„é ˜åŸŸã®ãƒ©ãƒ™ãƒ«ç•ªå·ã‚’æŠ½å‡º
+ vector<int> extractLabels(Mat& matrix){
+    vector<int> extract_labels(NUMBER_OF_DOTS); //æŠ½å‡ºã—ãŸãƒ©ãƒ™ãƒ«ç•ªå·ç”¨ï¼ãƒ‰ãƒƒãƒˆã®æ•°ã ã‘ç®±ã‚’ç”¨æ„ï¼
+    int max_current = matrix.at<int>(1, 4);
+    int dot_label_num = 0; //nç•ªç›®ã«å¤§ãã„è¦ç´ ã®ãƒ©ãƒ™ãƒ«ç•ªå·æ ¼ç´ç”¨ï¼
+
+    for (int i = 0; i < NUMBER_OF_DOTS; i++){
+
+        //èƒŒæ™¯é ˜åŸŸï¼ˆãƒ©ãƒ™ãƒ«0ï¼‰ã‚’ã®ãã„ãŸiç•ªç›®ã«å¤§ãã„è¦ç´ ã‚’æ¢ç´¢
+        for (int j = 1; j < matrix.rows; j++) {
+            if (max_current < matrix.at<int>(j, 4))
+            {  
+                max_current = matrix.at<int>(j, 4);
+                dot_label_num = j;
+            }
+        }
+        extract_labels[i] = dot_label_num;        
+    }
+    
+    return extract_labels;
+}
+
 int main()
 {
-    //ƒtƒ@ƒCƒ‹‘‚«‚İ
+    //ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿
     string output_csv_file_path = "Output/result.csv";
-    // ‘‚«‚Şcsvƒtƒ@ƒCƒ‹‚ğŠJ‚­(std::ofstream‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^‚ÅŠJ‚­)
+    // æ›¸ãè¾¼ã‚€csvãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã(std::ofstreamã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã§é–‹ã)
     ofstream ofs_csv_file(output_csv_file_path);
 
     Mat img_src;
-    VideoCapture capture(0);//ƒJƒƒ‰ƒI[ƒvƒ“
+
+
+    //ã‚«ãƒ¡ãƒ©ä½¿ç”¨æ™‚
+    VideoCapture capture(0);//ã‚«ãƒ¡ãƒ©ã‚ªãƒ¼ãƒ—ãƒ³
     if (!capture.isOpened()) {
         cout << "error" << endl;
         return -1;
     }
-    //ƒR[ƒi[ŒŸo
-    // QlFhttp://opencv.jp/opencv2-x-samples/corner_detection/
-    //‚P–‡‚¾‚¯Ê^‚ğB‚é ¦Œ»İC‰æ‘œ‚Ì“Ç‚İ‚İ‚É•ÏX
-    capture >> img_src; //ƒJƒƒ‰‰f‘œ‚Ì“Ç‚İ‚İ
-    Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    // æ’®å½±ç”»åƒã‚µã‚¤ã‚ºã®è¨­å®š
+    bool bres = capture.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
+    if (bres != true) {
+        return -1;
+    }
+    bres = capture.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    if (bres != true) {
+        return -1;
+    }
+    // æ’®å½±ç”»åƒå–å¾—é«˜é€ŸåŒ–ã®å·¥å¤«
+    bres = capture.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+    if (bres != true) {
+        return -1;
+    }
+    //ã‚³ãƒ¼ãƒŠãƒ¼æ¤œå‡º
+    // å‚è€ƒï¼šhttp://opencv.jp/opencv2-x-samples/corner_detection/
+    //ï¼‘æšã ã‘å†™çœŸã‚’æ’®ã‚‹ â€»ç¾åœ¨ï¼Œç”»åƒã®èª­ã¿è¾¼ã¿ã«å¤‰æ›´
+    capture >> img_src; //ã‚«ãƒ¡ãƒ©æ˜ åƒã®èª­ã¿è¾¼ã¿
+    Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
 
-    //// ‰æ‘œƒtƒ@ƒCƒ‹‚ÌƒpƒX
+    //// ç”»åƒãƒ•ã‚¡ã‚¤ãƒ«ä½¿ç”¨æ™‚
     //string filename = "image.jpg";
-    //// ‰æ‘œ‚ğ“Ç‚İ‚Ş
+    //// ç”»åƒã‚’èª­ã¿è¾¼ã‚€
     //img_src = imread(filename);
     //if (img_src.empty()) {
     //    cout << "Failed to load the image: " << filename << endl;
     //    return -1;
     //}
-    //Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    //Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
 
-    //ƒOƒŒ[ƒXƒP[ƒ‹•ÏŠ·
+    //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«å¤‰æ›
     Mat gray_img;
     cvtColor(img_src, gray_img, COLOR_BGR2GRAY);
 
-    //ƒKƒEƒVƒAƒ“ƒtƒBƒ‹ƒ^‚Ì“K—p
-    Mat gaussian_img;
-    GaussianBlur(gray_img, gaussian_img, Size(3, 3), 0, 0);
+    //// è†¨å¼µå‡¦ç†
+    //Mat dilated_img;
+    //dilate(gray_img, dilated_img, Mat(), Point(-1, -1), 3);
 
-    // ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚Ì“K—p
-    Mat laplacian_img_raw;
-    Laplacian(gaussian_img, laplacian_img_raw, CV_16S, 5);
-    //convertScaleAbs‚Ìalpha,beta‚Ì’l‚ğŒˆ’è‚·‚é
-    double minValue, maxValue;
-    double alpha, beta;
-    minMaxLoc(laplacian_img_raw, &minValue, &maxValue); //Å‘åÅ¬‚Ì‰æ‘f’l‚Ìæ“¾
-    alpha = 255 / (maxValue - minValue);
-    beta = -alpha / minValue;
-    cout << "Minimum value: " << minValue << endl;
-    cout << "Maximum value: " << maxValue << endl;
-    cout << "alpha: " << alpha << endl;
-    cout << "beta: " << beta << endl;
+    //// åç¸®å‡¦ç†
+    //Mat eroded_img;
+    //erode(dilated_img, eroded_img, Mat(), Point(-1, -1), 3);
 
-    //ƒ‰ƒvƒ‰ƒVƒAƒ“‚ÌŒ‹‰Ê‚ÉABS
-    Mat laplacian_img_abs;
-    cv::convertScaleAbs(laplacian_img_raw, laplacian_img_abs, alpha, beta);
 
-    //ƒR[ƒi[‚ÌŒŸo
-    vector<Point2f> corners;
-    goodFeaturesToTrack(laplacian_img_abs, corners, 80, 0.01, 30, Mat(), 3, true);
+    // äºŒå€¤åŒ–
+    Mat binary_img;
+    threshold(gray_img, binary_img, THRESHOLD, 255, THRESH_BINARY);
 
-    //À•W•ÏŠ·((u, v)¨(u, height - v))
-    float height = laplacian_img_abs.rows;
-    cout << "height: " << height << endl;
-    vector<Point2f> trans_corners(corners.size());
-    for (int i = 0; i < corners.size(); i++) {
-        Point2f origin_pnt = corners[i];
-        double u = origin_pnt.x;
-        double v = origin_pnt.y;
-        double trans_u = u;
-        double trans_v = height - v;
-        Point2f trans_pnt;
-        trans_pnt.x = trans_u;
-        trans_pnt.y = trans_v;
-        trans_corners[i] = trans_pnt;
+
+
+
+    //// äºŒå€¤åŒ–ç”»åƒã®ç”»ç´ å€¤ã‚’è¡¨ç¤º
+    //for (int row = 0; row < binaryImage.rows; ++row) {
+    //    for (int col = 0; col < binaryImage.cols; ++col) {
+    //        int pixelValue = binaryImage.at<uchar>(row, col);
+    //        std::cout << "Pixel value at (" << row << ", " << col << "): " << pixelValue << std::endl;
+    //    }
+    //}
+
+    //ç”»ç´ å€¤ã‚’åè»¢
+    Mat inverted_binary_img = 255 - binary_img;
+
+    //é ˜åŸŸåˆ†å‰²
+    Mat labels, stats, centroids;
+    int num_objects = connectedComponentsWithStats(inverted_binary_img, labels, stats, centroids);
+    cout << "labels.at<int>(200, 100): " << labels.at<int>(200, 100) << endl;
+    cout << "labels.at<int>(0, 0): " << labels.at<int>(0, 0) << endl;
+    cout << "stats: " << stats.rows << endl;
+
+    vector<int> extract_labels = extractLabels(stats); //èƒŒæ™¯é ˜åŸŸã‚’é™¤ã„ãŸé ˜åŸŸã®ã†ã¡ï¼Œä¸Šã‹ã‚‰NUMBER_OF_DOTSå€‹ã ã‘ï¼Œå¤§ãã„é ˜åŸŸã®ãƒ©ãƒ™ãƒ«ç•ªå·ã‚’æŠ½å‡º
+
+    for (int i = 0; i < extract_labels.size(); i++) {
+        cout << "extract_labels[i]: " << extract_labels[i] << endl;
     }
 
-    //// yÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
-    //sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
+    //// Matå‹ã®å„è¦ç´ ã®å€¤ã‚’è¡¨ç¤º
+    //for (int i = 0; i < labels.rows; i++)
+    //{
+    //    for (int j = 0; j < labels.cols; j++)
+    //    {
+    //        //std::cout << "Pixel (" << i << ", " << j << "): ";
+    //        std::cout << static_cast<int>(labels.at<int>(i, j)) << ", ";
+    //    }
+    //}
+    
+    ////åº§æ¨™å¤‰æ›((u, v)â†’(u, height - v))
+    //float height = laplacian_img_abs.rows;
+    //cout << "height: " << height << endl;
+    //vector<Point2f> trans_corners(corners.size());
+    //for (int i = 0; i < corners.size(); i++) {
+    //    Point2f origin_pnt = corners[i];
+    //    double u = origin_pnt.x;
+    //    double v = origin_pnt.y;
+    //    double trans_u = u;
+    //    double trans_v = height - v;
+    //    Point2f trans_pnt;
+    //    trans_pnt.x = trans_u;
+    //    trans_pnt.y = trans_v;
+    //    trans_corners[i] = trans_pnt;
+    //}
+
+    ////// yåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
+    ////sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
+    ////    return a.y < b.y;
+    ////    });
+    ////// xåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
+    ////sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
+    ////    return (a.y == b.y) ? (a.x < b.x) : false;
+    ////    });
+    ////cout << corners << endl;;
+
+    //// yåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
+    //sort(trans_corners.begin(), trans_corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
     //    return a.y < b.y;
     //    });
-    //// xÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
-    //sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
+    //// xåº§æ¨™ãŒå°ã•ã„é †ã«ã‚½ãƒ¼ãƒˆ
+    //sort(trans_corners.begin(), trans_corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
     //    return (a.y == b.y) ? (a.x < b.x) : false;
     //    });
-    //cout << corners << endl;;
-
-    // yÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
-    sort(trans_corners.begin(), trans_corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
-        return a.y < b.y;
-        });
-    // xÀ•W‚ª¬‚³‚¢‡‚Éƒ\[ƒg
-    sort(trans_corners.begin(), trans_corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
-        return (a.y == b.y) ? (a.x < b.x) : false;
-        });
-    cout << "trans_corners: " << trans_corners << endl;
+    //cout << "trans_corners: " << trans_corners << endl;
 
 
-    //(0, 0)‚É‹ß‚¢“_‚©‚ç‰E•À‚Ñ‚Ésort
-    vector<Point2f> sort_trans_corners; //sort‚µ‚½“_—ñ—p
-    vector<Point2f> range_corners; //range“à‚ÉŠÜ‚Ü‚ê‚é“_—ñ—p
-    double range = sqrt(pow(trans_corners[0].x - trans_corners[1].x, 2) + pow(trans_corners[0].y - trans_corners[1].y, 2)); //xÀ•W‚Ì¬‚³‚¢‡‚Ésort‚·‚éÛ‚Ì“_—ñ‚Ì”ÍˆÍ‚ÌŒˆ’èD‚±‚Ì’l‚Íˆê“I
-    Point2f reference_point(0.0f, 0.0f); //Šî€“_Ši”[—p
-    cout << "int(sqrt(trans_corners.size())): " << int(sqrt(trans_corners.size())) << endl;
+    ////(0, 0)ã«è¿‘ã„ç‚¹ã‹ã‚‰å³ä¸¦ã³ã«sort
+    //vector<Point2f> sort_trans_corners; //sortã—ãŸç‚¹åˆ—ç”¨
+    //vector<Point2f> range_corners; //rangeå†…ã«å«ã¾ã‚Œã‚‹ç‚¹åˆ—ç”¨
+    //double range = sqrt(pow(trans_corners[0].x - trans_corners[1].x, 2) + pow(trans_corners[0].y - trans_corners[1].y, 2)); //xåº§æ¨™ã®å°ã•ã„é †ã«sortã™ã‚‹éš›ã®ç‚¹åˆ—ã®ç¯„å›²ã®æ±ºå®šï¼ã“ã®å€¤ã¯ä¸€æ™‚çš„
+    //Point2f reference_point(0.0f, 0.0f); //åŸºæº–ç‚¹æ ¼ç´ç”¨
+    //cout << "int(sqrt(trans_corners.size())): " << int(sqrt(trans_corners.size())) << endl;
 
-    for (int i = 0; i < int(sqrt(trans_corners.size())); i++) {
-        reference_point = getClosestPoint(trans_corners, reference_point); //Šî€“_‚Éˆê”Ô‹ß‚¢“_‚ğV‚½‚ÈŠî€“_‚Æ‚·‚é
-        range_corners = sortWithinRange(trans_corners, reference_point, range); //reference_point‚ğŠî€‚Æ‚µCrange‚ÉŠÜ‚Ü‚ê‚é“_—ñ‚ğtrans_corners‚©‚ç’Šo‚µCxÀ•W‚Ì¬‚³‚¢‡‚Ésort‚µ‚½Œ‹‰Ê‚ğ•Ô‚·
-        //sort_trans_corners‚ÉŠi”[
-        for (const Point2f& corner : range_corners) {
-            sort_trans_corners.push_back(corner);
-        }
-        reference_point = Point2f(reference_point.x, reference_point.y + range); //Šî€“_‚ÌyÀ•W‚Érange‚¾‚¯‘«‚µ‚½À•W‚Éˆê”Ô‹ß‚¢“_‚ğV‚½‚ÈŠî€“_‚Æ‚·‚éD
-    }
-    cout << "sort_trans_corners: " << sort_trans_corners << endl;
+    //for (int i = 0; i < int(sqrt(trans_corners.size())); i++) {
+    //    reference_point = getClosestPoint(trans_corners, reference_point); //åŸºæº–ç‚¹ã«ä¸€ç•ªè¿‘ã„ç‚¹ã‚’æ–°ãŸãªåŸºæº–ç‚¹ã¨ã™ã‚‹
+    //    range_corners = sortWithinRange(trans_corners, reference_point, range); //reference_pointã‚’åŸºæº–ã¨ã—ï¼Œrangeã«å«ã¾ã‚Œã‚‹ç‚¹åˆ—ã‚’trans_cornersã‹ã‚‰æŠ½å‡ºã—ï¼Œxåº§æ¨™ã®å°ã•ã„é †ã«sortã—ãŸçµæœã‚’è¿”ã™
+    //    //sort_trans_cornersã«æ ¼ç´
+    //    for (const Point2f& corner : range_corners) {
+    //        sort_trans_corners.push_back(corner);
+    //    }
+    //    reference_point = Point2f(reference_point.x, reference_point.y + range); //åŸºæº–ç‚¹ã®yåº§æ¨™ã«rangeã ã‘è¶³ã—ãŸåº§æ¨™ã«ä¸€ç•ªè¿‘ã„ç‚¹ã‚’æ–°ãŸãªåŸºæº–ç‚¹ã¨ã™ã‚‹ï¼
+    //}
+    //cout << "sort_trans_corners: " << sort_trans_corners << endl;
 
-    //// o—Í‰æ‘œ‚Ìì¬
-    vector<Point2f>::iterator it_corner = corners.begin();
-    it_corner = corners.begin();
-    for (; it_corner != corners.end(); ++it_corner) {
-        circle(result_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //ŠÖ”‚Ìà–¾ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
-        ofs_csv_file << it_corner->x << ", " << it_corner->y << endl;
-        circle(result_img, Point(it_corner->x, it_corner->y), 8, Scalar(0, 255, 0));
-    }
+    ////// å‡ºåŠ›ç”»åƒã®ä½œæˆ
+    //vector<Point2f>::iterator it_corner = corners.begin();
+    //it_corner = corners.begin();
+    //for (; it_corner != corners.end(); ++it_corner) {
+    //    circle(result_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //é–¢æ•°ã®èª¬æ˜ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
+    //    ofs_csv_file << it_corner->x << ", " << it_corner->y << endl;
+    //    circle(result_img, Point(it_corner->x, it_corner->y), 8, Scalar(0, 255, 0));
+    //}
 
 
-    // Œ‹‰Ê•\¦
-    //ƒEƒCƒ“ƒhƒE¶¬
+    //// çµæœè¡¨ç¤º
+    ////ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ç”Ÿæˆ
     namedWindow(win_src, WINDOW_AUTOSIZE);
     namedWindow("gray_img", WINDOW_AUTOSIZE);
-    namedWindow("gaussian_img", WINDOW_AUTOSIZE);
-    namedWindow("laplacian_img_raw", WINDOW_AUTOSIZE);
-    namedWindow("laplacian_img_abs", WINDOW_AUTOSIZE);
-    namedWindow("result_img", WINDOW_AUTOSIZE);
+    namedWindow("dilated_img", WINDOW_AUTOSIZE);
+    namedWindow("eroded_img", WINDOW_AUTOSIZE);
+    namedWindow("binary_img", WINDOW_AUTOSIZE);
+    //namedWindow("result_img", WINDOW_AUTOSIZE);
 
-    imshow(win_src, img_src); //“ü—Í‰æ‘œ‚ğ•\¦
-    imshow("gray_img", gray_img); //ƒOƒŒ[ƒXƒP[ƒ‹‰æ‘œ‚ğ•\¦
-    imshow("gaussian_img", gaussian_img); //•½’R‰»‰æ‘œ‚ğ•\¦
-    imshow("laplacian_img_raw", laplacian_img_raw); //ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚ÌŒ‹‰Êi0`255‚Ì”ÍˆÍ‚Éû‚Ü‚ç‚È‚¢)‚ğ•\¦
-    imshow("laplacian_img_abs", laplacian_img_abs); //ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚ÌŒ‹‰Êi0`255‚Ì”ÍˆÍ‚Éû‚Ü‚é)‚ğ•\¦
-    imshow("result_img", result_img); //Œğ“_ŒŸo‰æ‘œ‚ğ•\¦
+    imshow(win_src, img_src); //å…¥åŠ›ç”»åƒã‚’è¡¨ç¤º
+    imshow("gray_img", gray_img); //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ç”»åƒã‚’è¡¨ç¤º
+    //imshow("dilated_img", dilated_img); //è†¨å¼µå‡¦ç†ç”»åƒã‚’è¡¨ç¤º
+    //imshow("eroded_img", eroded_img); //åç¸®å‡¦ç†ç”»åƒã‚’è¡¨ç¤º
+    imshow("binary_img", binary_img); //2å€¤åŒ–ç”»åƒã‚’è¡¨ç¤º
+    //imshow("result_img", result_img); //äº¤ç‚¹æ¤œå‡ºç”»åƒã‚’è¡¨ç¤º
 
-    // ‰æ‘œ‚ğ•Û‘¶‚·‚é
-    std::string filename1 = "gray_img.jpg";
-    std::string filename2 = "gaussian_img.jpg";
-    std::string filename3 = "laplacian_img_abs.jpg";
-    std::string filename4 = "result_img.jpg";
-    bool success1 = cv::imwrite(filename1, gray_img);
-    bool success2 = cv::imwrite(filename2, gaussian_img);
-    bool success3 = cv::imwrite(filename3, laplacian_img_abs);
-    bool success4 = cv::imwrite(filename4, result_img);
+    //// ç”»åƒã‚’ä¿å­˜ã™ã‚‹
+    //std::string filename1 = "gray_img.jpg";
+    //std::string filename2 = "gaussian_img.jpg";
+    //std::string filename3 = "laplacian_img_abs.jpg";
+    //std::string filename4 = "result_img.jpg";
+    //bool success1 = cv::imwrite(filename1, gray_img);
+    //bool success2 = cv::imwrite(filename2, gaussian_img);
+    //bool success3 = cv::imwrite(filename3, laplacian_img_abs);
+    //bool success4 = cv::imwrite(filename4, result_img);
 
 
     waitKey(0);
