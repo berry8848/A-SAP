@@ -1,3 +1,5 @@
+//目的：点探索し，ひずみ補正関数作成の準備 二値化→領域分割→ノイズ除去→ラベルごとに中心座標を求める→座標変換→ソート
+
 #define _CRT_SECURE_NO_WORNINGS
 #define _USE_MATH_DEFINES
 #include <iostream>
