@@ -3,10 +3,10 @@
 #include <iostream>
 #include <cmath>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp> //‰æ‘œ“üo—Í•GUI‘€ì—p
-#include <string> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <fstream> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <algorithm> //sortŠÖ”—p
+#include <opencv2/highgui/highgui.hpp> //ç”»åƒå…¥å‡ºåŠ›ï¼†GUIæ“ä½œç”¨
+#include <string> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <fstream> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <algorithm> //sorté–¢æ•°ç”¨
 using namespace std;
 using namespace cv;
 string win_src = "src";
@@ -16,9 +16,9 @@ string win_dst = "dst";
 #define NUMBER_OF_MASTERS 6
 
 
-//”ÍˆÍ“à‚Å0ˆÈŠO‚Ì’l‚ğæ‚éƒ‰ƒxƒ‹‚ğ•Ô‚·
+//ç¯„å›²å†…ã§0ä»¥å¤–ã®å€¤ã‚’å–ã‚‹ãƒ©ãƒ™ãƒ«ã‚’è¿”ã™
 int searchLabelInRange(const Point2f& corner, Mat& labels, vector<vector<Point2f>>& master_labels) {
-    // ‰æ‘œ‚Ì•‚Æ‚‚³‚ğæ“¾
+    // ç”»åƒã®å¹…ã¨é«˜ã•ã‚’å–å¾—
     int width = labels.cols;
     int height = labels.rows;
 
@@ -32,126 +32,191 @@ int searchLabelInRange(const Point2f& corner, Mat& labels, vector<vector<Point2f
             }
         }
     }
-    cout << "ERRORFƒR[ƒi[‚Ìƒ‰ƒxƒ‹•t‚¯‚ª‚Å‚«‚Ü‚¹‚ñ‚Å‚µ‚½D" << endl;
+    cout << "ERRORï¼šã‚³ãƒ¼ãƒŠãƒ¼ã®ãƒ©ãƒ™ãƒ«ä»˜ã‘ãŒã§ãã¾ã›ã‚“ã§ã—ãŸï¼" << endl;
     return 0;
 }
 
-//Šes‚Ì—ñ‚ÌƒTƒCƒY‚ğŠm”F‚µCw’è‚µ‚½—ñ‚ÌƒTƒCƒYˆÈŠO‚ÌƒGƒ‰[ƒƒbƒZ[ƒW‚ğ•\¦
+//å„è¡Œã®åˆ—ã®ã‚µã‚¤ã‚ºã‚’ç¢ºèªã—ï¼ŒæŒ‡å®šã—ãŸåˆ—ã®ã‚µã‚¤ã‚ºä»¥å¤–ã®æ™‚ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¡¨ç¤º
 void checkColumnSize(const vector<vector<Point2f>>& matrix) {
     int expectedSize = NUMBER_OF_CORNERS / NUMBER_OF_MASTERS;
     for (int targetRow = 0; targetRow < matrix.size(); ++targetRow) {
-        int actualColumnSize = matrix[targetRow].size();  // —ñ‚ÌƒTƒCƒY‚ÍÅ‰‚Ìs‚Ì—v‘f”‚Æ‚·‚é
+        int actualColumnSize = matrix[targetRow].size();  // åˆ—ã®ã‚µã‚¤ã‚ºã¯æœ€åˆã®è¡Œã®è¦ç´ æ•°ã¨ã™ã‚‹
         if (actualColumnSize != expectedSize) {
-            cout << "ERROR: Row " << targetRow << " ‚ÍŠú‘Ò‚µ‚Ä‚¢‚éƒTƒCƒY”‚Å‚Í‚ ‚è‚Ü‚¹‚ñD" << endl;
+            cout << "ERROR: Row " << targetRow << " ã¯æœŸå¾…ã—ã¦ã„ã‚‹ã‚µã‚¤ã‚ºæ•°ã§ã¯ã‚ã‚Šã¾ã›ã‚“ï¼" << endl;
         }
     }
 }
 
 int main()
 {
-    //ƒtƒ@ƒCƒ‹‘‚«‚İ
+    //ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿
     string output_csv_file_path = "Output/result.csv";
-    // ‘‚«‚Şcsvƒtƒ@ƒCƒ‹‚ğŠJ‚­(std::ofstream‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^‚ÅŠJ‚­)
+    // æ›¸ãè¾¼ã‚€csvãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã(std::ofstreamã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã§é–‹ã)
     ofstream ofs_csv_file(output_csv_file_path);
 
     Mat img_src;
-    //VideoCapture capture(0);//ƒJƒƒ‰ƒI[ƒvƒ“
+    //VideoCapture capture(0);//ã‚«ãƒ¡ãƒ©ã‚ªãƒ¼ãƒ—ãƒ³
     //if (!capture.isOpened()) {
     //    cout << "error" << endl;
     //    return -1;
     //}
-    ////ƒR[ƒi[ŒŸo
-    //// QlFhttp://opencv.jp/opencv2-x-samples/corner_detection/
-    ////‚P–‡‚¾‚¯Ê^‚ğB‚é ¦Œ»İC‰æ‘œ‚Ì“Ç‚İ‚İ‚É•ÏX
-    //capture >> img_src; //ƒJƒƒ‰‰f‘œ‚Ì“Ç‚İ‚İ
-    //Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    ////ã‚³ãƒ¼ãƒŠãƒ¼æ¤œå‡º
+    //// å‚è€ƒï¼šhttp://opencv.jp/opencv2-x-samples/corner_detection/
+    ////ï¼‘æšã ã‘å†™çœŸã‚’æ’®ã‚‹ â€»ç¾åœ¨ï¼Œç”»åƒã®èª­ã¿è¾¼ã¿ã«å¤‰æ›´
+    //capture >> img_src; //ã‚«ãƒ¡ãƒ©æ˜ åƒã®èª­ã¿è¾¼ã¿
+    //Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
 
-    // ‰æ‘œƒtƒ@ƒCƒ‹‚ÌƒpƒX
+    // ç”»åƒãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹
     string filename = "image.jpg";
-    // ‰æ‘œ‚ğ“Ç‚İ‚Ş
+    // ç”»åƒã‚’èª­ã¿è¾¼ã‚€
     img_src = imread(filename);
     if (img_src.empty()) {
         cout << "Failed to load the image: " << filename << endl;
         return -1;
     }
-    Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
 
-    //ƒOƒŒ[ƒXƒP[ƒ‹•ÏŠ·
+    //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«å¤‰æ›
     Mat gray_img;
     cvtColor(img_src, gray_img, COLOR_BGR2GRAY);
 
-    //ƒKƒEƒVƒAƒ“ƒtƒBƒ‹ƒ^‚Ì“K—p
+    //ã‚¬ã‚¦ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®é©ç”¨
     Mat gaussian_img;
     GaussianBlur(gray_img, gaussian_img, Size(3, 3), 0, 0);
 
-    // ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚Ì“K—p
+    // ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®é©ç”¨
     Mat laplacian_img_raw;
     Laplacian(gaussian_img, laplacian_img_raw, CV_16S, 5);
-    //convertScaleAbs‚Ìalpha,beta‚Ì’l‚ğŒˆ’è‚·‚é
+    //convertScaleAbsã®alpha,betaã®å€¤ã‚’æ±ºå®šã™ã‚‹
     double minValue, maxValue;
     double alpha, beta;
-    minMaxLoc(laplacian_img_raw, &minValue, &maxValue); //Å‘åÅ¬‚Ì‰æ‘f’l‚Ìæ“¾
+    minMaxLoc(laplacian_img_raw, &minValue, &maxValue); //æœ€å¤§æœ€å°ã®ç”»ç´ å€¤ã®å–å¾—
     alpha = 255 / (maxValue - minValue);
     beta = -alpha / minValue;
 
-    //ƒ‰ƒvƒ‰ƒVƒAƒ“‚ÌŒ‹‰Ê‚ÉABS
+    //ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ã®çµæœã«ABS
     Mat laplacian_img_abs;
     convertScaleAbs(laplacian_img_raw, laplacian_img_abs, alpha, beta);
 
-    //ƒR[ƒi[‚ÌŒŸo
+    //ã‚³ãƒ¼ãƒŠãƒ¼ã®æ¤œå‡º
     vector<Point2f> corners;
     goodFeaturesToTrack(laplacian_img_abs, corners, 80, 0.01, 30, Mat(), 3, true);
     if (corners.size() != NUMBER_OF_CORNERS) {
-        cout << "ERRORFw’è‚³‚ê‚½ƒR[ƒi[“_‚Ì”‚ÆŒŸ’m‚µ‚½ƒR[ƒi[“_‚Ì”‚ªˆÙ‚È‚è‚Ü‚·D" << endl;
+        cout << "ERRORï¼šæŒ‡å®šã•ã‚ŒãŸã‚³ãƒ¼ãƒŠãƒ¼ç‚¹ã®æ•°ã¨æ¤œçŸ¥ã—ãŸã‚³ãƒ¼ãƒŠãƒ¼ç‚¹ã®æ•°ãŒç•°ãªã‚Šã¾ã™ï¼" << endl;
     }
     cout << "corners: " << corners << endl;
     cout << "corners.size: " << corners.size() << endl;
 
-    //ƒOƒŒ[ƒXƒP[ƒ‹‰æ‘œ‚É‘Î‚µ‚Ä2’l‰»
+    //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ç”»åƒã«å¯¾ã—ã¦2å€¤åŒ–
     Mat binary_img;
     threshold(gray_img, binary_img, 128, 255, THRESH_BINARY);
 
-    //‰æ‘f’l‚ğ”½“]
+    //ç”»ç´ å€¤ã‚’åè»¢
     Mat inverted_binary_img = 255 - binary_img;
 
 
-    //—Ìˆæ•ªŠ„
+    //é ˜åŸŸåˆ†å‰²
     Mat labels, stats, centroids;
     int num_objects = connectedComponentsWithStats(inverted_binary_img, labels, stats, centroids);
     cout << "labels.at<int>(200, 100): " << labels.at<int>(200, 100) << endl;
     cout << "labels.at<int>(0, 0): " << labels.at<int>(0, 0) << endl;
     cout << "stats: " << stats << endl;
 
-    //ƒR[ƒi[‚Ìƒ‰ƒxƒ‹•t‚¯
+    //ã‚³ãƒ¼ãƒŠãƒ¼ã®ãƒ©ãƒ™ãƒ«ä»˜ã‘
     int corner_labels[NUMBER_OF_CORNERS];
-    vector<vector<Point2f>> master_labels(NUMBER_OF_MASTERS, vector<Point2f>(0));
+    vector<vector<Point2f>> master_labels(NUMBER_OF_MASTERS, vector<Point2f>(0)); //ãƒã‚¹ã‚¿ãƒ¼é…ç½®ã®å››éš…ã®åº§æ¨™å€¤ã‚’æ ¼ç´ï¼ä¾‹ï¼šmaster_labels[][] = (x, y)
     for (int i = 0; i < NUMBER_OF_CORNERS; i++) {
         corner_labels[i] = searchLabelInRange(corners.at(i), labels, master_labels);
         cout << "corner_labels: " << corner_labels[i] << endl;
     }
 
-    //³í‚Éƒ‰ƒxƒ‹•t‚¯‚Å‚«‚Ä‚¢‚é‚©‚ğŠm”F
+    //æ­£å¸¸ã«ãƒ©ãƒ™ãƒ«ä»˜ã‘ã§ãã¦ã„ã‚‹ã‹ã‚’ç¢ºèª
     checkColumnSize(master_labels);
 
-    // ’l‚Ì•\¦
+    // å€¤ã®è¡¨ç¤º
     for (int i = 0; i < master_labels.size(); ++i) {
         for (int j = 0; j < master_labels[i].size(); ++j) {
             cout << "master_labels[" << i << "][" << j << "]: (" << master_labels[i][j].x << ", " << master_labels[i][j].y << ")" << endl;
         }
     }
 
-    // o—Í‰æ‘œ‚Ìì¬
-    vector<Point2f>::iterator it_corner = corners.begin();
-    it_corner = corners.begin();
-    for (; it_corner != corners.end(); ++it_corner) {
-        circle(result_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //ŠÖ”‚Ìà–¾ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
-        ofs_csv_file << it_corner->x << ", " << it_corner->y << endl;
-        circle(result_img, Point(it_corner->x, it_corner->y), 8, Scalar(0, 255, 0));
+    //// å‡ºåŠ›ç”»åƒã®ä½œæˆï¼ˆæœ¬ç•ªç”¨ï¼‰
+    //vector<Point2f>::iterator it_corner = corners.begin();
+    //it_corner = corners.begin();
+    //for (; it_corner != corners.end(); ++it_corner) {
+    //    circle(result_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //é–¢æ•°ã®èª¬æ˜ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
+    //    ofs_csv_file << it_corner->x << ", " << it_corner->y << endl;
+    //    circle(result_img, Point(it_corner->x, it_corner->y), 8, Scalar(0, 255, 0));
+    //}
+
+    // å‡ºåŠ›ç”»åƒã®ä½œæˆï¼ˆç¢ºèªç”¨ï¼‰
+    for (int i = 0; i < NUMBER_OF_MASTERS; i++) {
+        if (i % NUMBER_OF_MASTERS == 0) {
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 1, Scalar(0, 255, 0), -1);
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 8, Scalar(0, 255, 0));
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 1, Scalar(0, 255, 0), -1);
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 8, Scalar(0, 255, 0));
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 1, Scalar(0, 255, 0), -1);
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 8, Scalar(0, 255, 0));
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 1, Scalar(0, 255, 0), -1);
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 8, Scalar(0, 255, 0));
+        }
+        if (i % NUMBER_OF_MASTERS == 1) {
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 1, Scalar(255, 0, 0), -1);
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 8, Scalar(255, 0, 0));
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 1, Scalar(255, 0, 0), -1);
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 8, Scalar(255, 0, 0));
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 1, Scalar(255, 0, 0), -1);
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 8, Scalar(255, 0, 0));
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 1, Scalar(255, 0, 0), -1);
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 8, Scalar(255, 0, 0));
+
+        }
+        if (i % NUMBER_OF_MASTERS == 2) {
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 1, Scalar(0, 0, 255), -1);
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 8, Scalar(0, 0, 255));
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 1, Scalar(0, 0, 255), -1);
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 8, Scalar(0, 0, 255));
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 1, Scalar(0, 0, 255), -1);
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 8, Scalar(0, 0, 255));
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 1, Scalar(0, 0, 255), -1);
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 8, Scalar(0, 0, 255));
+        }
+        if (i % NUMBER_OF_MASTERS == 3) {
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 1, Scalar(0, 255, 255), -1);
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 8, Scalar(0, 255, 255));
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 1, Scalar(0, 255, 255), -1);
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 8, Scalar(0, 255, 255));
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 1, Scalar(0, 255, 255), -1);
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 8, Scalar(0, 255, 255));
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 1, Scalar(0, 255, 255), -1);
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 8, Scalar(0, 255, 255));
+        }
+        if (i % NUMBER_OF_MASTERS == 4) {
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 1, Scalar(255, 0, 255), -1);
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 8, Scalar(255, 0, 255));
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 1, Scalar(255, 0, 255), -1);
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 8, Scalar(255, 0, 255));
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 1, Scalar(255, 0, 255), -1);
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 8, Scalar(255, 0, 255));
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 1, Scalar(255, 0, 255), -1);
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 8, Scalar(255, 0, 255));
+        }
+        if (i % NUMBER_OF_MASTERS == 5) {
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 1, Scalar(255, 255, 0), -1);
+            circle(result_img, Point(master_labels[i][0].x, master_labels[i][0].y), 8, Scalar(255, 255, 0));
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 1, Scalar(255, 255, 0), -1);
+            circle(result_img, Point(master_labels[i][1].x, master_labels[i][1].y), 8, Scalar(255, 255, 0));
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 1, Scalar(255, 255, 0), -1);
+            circle(result_img, Point(master_labels[i][2].x, master_labels[i][2].y), 8, Scalar(255, 255, 0));
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 1, Scalar(255, 255, 0), -1);
+            circle(result_img, Point(master_labels[i][3].x, master_labels[i][3].y), 8, Scalar(255, 255, 0));
+        }
     }
 
 
-    // Œ‹‰Ê•\¦
-    //ƒEƒCƒ“ƒhƒE¶¬
+    // çµæœè¡¨ç¤º
+    //ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ç”Ÿæˆ
     namedWindow(win_src, WINDOW_AUTOSIZE);
     namedWindow("gray_img", WINDOW_AUTOSIZE);
     namedWindow("gaussian_img", WINDOW_AUTOSIZE);
@@ -161,14 +226,14 @@ int main()
     namedWindow("labels", WINDOW_AUTOSIZE);
     namedWindow("result_img", WINDOW_AUTOSIZE);
 
-    imshow(win_src, img_src); //“ü—Í‰æ‘œ‚ğ•\¦
-    imshow("gray_img", gray_img); //ƒOƒŒ[ƒXƒP[ƒ‹‰æ‘œ‚ğ•\¦
-    imshow("gaussian_img", gaussian_img); //•½’R‰»‰æ‘œ‚ğ•\¦
-    imshow("laplacian_img_raw", laplacian_img_raw); //ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚ÌŒ‹‰Êi0`255‚Ì”ÍˆÍ‚Éû‚Ü‚ç‚È‚¢)‚ğ•\¦
-    imshow("laplacian_img_abs", laplacian_img_abs); //ƒ‰ƒvƒ‰ƒVƒAƒ“ƒtƒBƒ‹ƒ^‚ÌŒ‹‰Êi0`255‚Ì”ÍˆÍ‚Éû‚Ü‚é)‚ğ•\¦
-    imshow("inverted_binary_img", inverted_binary_img); //Œğ“_ŒŸo‰æ‘œ‚ğ•\¦
-    //imshow("labels", labels); //Œğ“_ŒŸo‰æ‘œ‚ğ•\¦
-    imshow("result_img", result_img); //Œğ“_ŒŸo‰æ‘œ‚ğ•\¦
+    imshow(win_src, img_src); //å…¥åŠ›ç”»åƒã‚’è¡¨ç¤º
+    imshow("gray_img", gray_img); //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ç”»åƒã‚’è¡¨ç¤º
+    imshow("gaussian_img", gaussian_img); //å¹³å¦åŒ–ç”»åƒã‚’è¡¨ç¤º
+    imshow("laplacian_img_raw", laplacian_img_raw); //ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®çµæœï¼ˆ0ï½255ã®ç¯„å›²ã«åã¾ã‚‰ãªã„)ã‚’è¡¨ç¤º
+    imshow("laplacian_img_abs", laplacian_img_abs); //ãƒ©ãƒ—ãƒ©ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®çµæœï¼ˆ0ï½255ã®ç¯„å›²ã«åã¾ã‚‹)ã‚’è¡¨ç¤º
+    imshow("inverted_binary_img", inverted_binary_img); //äº¤ç‚¹æ¤œå‡ºç”»åƒã‚’è¡¨ç¤º
+    //imshow("labels", labels); //äº¤ç‚¹æ¤œå‡ºç”»åƒã‚’è¡¨ç¤º
+    imshow("result_img", result_img); //äº¤ç‚¹æ¤œå‡ºç”»åƒã‚’è¡¨ç¤º
 
 
     waitKey(0);
