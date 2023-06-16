@@ -80,35 +80,6 @@ vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& referenc
     return extract_labels;
 }
 
- //抽出したラベル番号ごとに，そのラベル番号を満たす座標を抽出し，抽出した座標値の中心座標を返す
- vector<Point2f> extractCenter(vector<int>& extract_labels, Mat& labels) {
-     Point2f center; //中心座標格納用
-     vector<Point2f> centers; //各ラベル番号の中心座標格納用
-     vector<Point> target_label_points; //各ラベル番号の中心座標格納用
-
-     for (int i = 0; i < extract_labels.size(); i++) {
-         int search_num = extract_labels[i];
-         //指定したラベル番号の座標値を探索
-         for (int y = 0; y < labels.rows; y++) {
-             for (int x = 0; x < labels.cols; x++) {
-                 if (labels.at<int>(y, x) == search_num) {
-                     target_label_points.push_back({ x, y });
-                     cout << "(x, y) = " << x << " , " << y << "  " << target_label_points.back() << endl;
-                 }
-             }
-         }
-         if (target_label_points.empty()) {
-             cout << "ERROR" << endl;
-             return { { 1.0, 0.0} };
-         }
-
-         center = calculateCenter(target_label_points); //中心座標を計算
-         centers.push_back(center);
-         target_label_points.clear(); //格納した座標値を消去
-     }
-     return centers;
- }
-
  //複数の座標値を入力とし，それらの中心座標を出力とする
  Point2f calculateCenter(const vector<Point>& points) {
      float centerX = 0.0;
@@ -130,6 +101,32 @@ vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& referenc
 
      return center;
  }
+
+
+ //抽出したラベル番号ごとに，そのラベル番号を満たす座標を抽出し，抽出した座標値の中心座標を返す
+ vector<Point2f> extractCenter(vector<int>& extract_labels, Mat& labels) {
+     Point2f center; //中心座標格納用
+     vector<Point2f> centers; //各ラベル番号の中心座標格納用
+     vector<Point> target_label_points; //各ラベル番号の中心座標格納用
+
+     for (int i = 0; i < extract_labels.size(); i++) {
+         int search_num = extract_labels[i];
+         //指定したラベル番号の座標値を探索
+         for (int y = 0; y < labels.rows; y++) {
+             for (int x = 0; x < labels.cols; x++) {
+                 if (labels.at<int>(y, x) == search_num) {
+                     target_label_points.push_back({ x, y });
+                     //cout << "(x, y) = " << x << " , " << y << "  " << target_label_points.back() << endl;
+                 }
+             }
+         }
+         center = calculateCenter(target_label_points); //中心座標を計算
+         centers.push_back(center);
+         target_label_points.clear(); //格納した座標値を消去
+     }
+     return centers;
+ }
+
 
 
 int main()
@@ -182,30 +179,9 @@ int main()
     Mat gray_img;
     cvtColor(img_src, gray_img, COLOR_BGR2GRAY);
 
-    //// 膨張処理
-    //Mat dilated_img;
-    //dilate(gray_img, dilated_img, Mat(), Point(-1, -1), 3);
-
-    //// 収縮処理
-    //Mat eroded_img;
-    //erode(dilated_img, eroded_img, Mat(), Point(-1, -1), 3);
-
-
     // 二値化
     Mat binary_img;
     threshold(gray_img, binary_img, THRESHOLD, 255, THRESH_BINARY);
-
-
-
-
-    //// 二値化画像の画素値を表示
-    //for (int row = 0; row < binaryImage.rows; ++row) {
-    //    for (int col = 0; col < binaryImage.cols; ++col) {
-    //        int pixelValue = binaryImage.at<uchar>(row, col);
-    //        std::cout << "Pixel value at (" << row << ", " << col << "): " << pixelValue << std::endl;
-    //    }
-    //}
-
 
     //画素値を反転
     Mat inverted_binary_img = 255 - binary_img;
@@ -225,73 +201,53 @@ int main()
 
 
     vector<Point2f> centers;
-    centers = extractCenter(extract_labels, labels);
+    centers = extractCenter(extract_labels, labels); //抽出したラベル番号ごとに，そのラベル番号を満たす座標を抽出し，抽出した座標値の中心座標を返す．
 
-
-    //// Mat型の各要素の値を表示
-    //for (int i = 0; i < labels.rows; i++)
-    //{
-    //    for (int j = 0; j < labels.cols; j++)
-    //    {
-    //        //std::cout << "Pixel (" << i << ", " << j << "): ";
-    //        std::cout << static_cast<int>(labels.at<int>(i, j)) << ", ";
-    //    }
-    //}
     
-    ////座標変換((u, v)→(u, height - v))
-    //float height = laplacian_img_abs.rows;
-    //cout << "height: " << height << endl;
-    //vector<Point2f> trans_corners(corners.size());
-    //for (int i = 0; i < corners.size(); i++) {
-    //    Point2f origin_pnt = corners[i];
-    //    double u = origin_pnt.x;
-    //    double v = origin_pnt.y;
-    //    double trans_u = u;
-    //    double trans_v = height - v;
-    //    Point2f trans_pnt;
-    //    trans_pnt.x = trans_u;
-    //    trans_pnt.y = trans_v;
-    //    trans_corners[i] = trans_pnt;
-    //}
+    //座標変換((u, v)→(u, height - v))
+    float height = img_src.rows;
+    cout << "height: " << height << endl;
+    vector<Point2f> trans_centers(centers.size());
+    for (int i = 0; i < centers.size(); i++) {
+        Point2f origin_pnt = centers[i];
+        double u = origin_pnt.x;
+        double v = origin_pnt.y;
+        double trans_u = u;
+        double trans_v = height - v;
+        Point2f trans_pnt;
+        trans_pnt.x = trans_u;
+        trans_pnt.y = trans_v;
+        trans_centers[i] = trans_pnt;
+    }
 
-    ////// y座標が小さい順にソート
-    ////sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
-    ////    return a.y < b.y;
-    ////    });
-    ////// x座標が小さい順にソート
-    ////sort(corners.begin(), corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
-    ////    return (a.y == b.y) ? (a.x < b.x) : false;
-    ////    });
-    ////cout << corners << endl;;
-
-    //// y座標が小さい順にソート
-    //sort(trans_corners.begin(), trans_corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
-    //    return a.y < b.y;
-    //    });
-    //// x座標が小さい順にソート
-    //sort(trans_corners.begin(), trans_corners.end(), [](const cv::Point2f& a, const cv::Point2f& b) {
-    //    return (a.y == b.y) ? (a.x < b.x) : false;
-    //    });
-    //cout << "trans_corners: " << trans_corners << endl;
+    //y座標が小さい順にソート
+    sort(trans_centers.begin(), trans_centers.end(), [](const Point2f& a, const Point2f& b) {
+        return a.y < b.y;
+        });
+    //x座標が小さい順にソート
+    sort(trans_centers.begin(), trans_centers.end(), [](const Point2f& a, const Point2f& b) {
+        return (a.y == b.y) ? (a.x < b.x) : false;
+        });
+    cout << "trans_centers: " << trans_centers << endl;
 
 
-    ////(0, 0)に近い点から右並びにsort
-    //vector<Point2f> sort_trans_corners; //sortした点列用
-    //vector<Point2f> range_corners; //range内に含まれる点列用
-    //double range = sqrt(pow(trans_corners[0].x - trans_corners[1].x, 2) + pow(trans_corners[0].y - trans_corners[1].y, 2)); //x座標の小さい順にsortする際の点列の範囲の決定．この値は一時的
-    //Point2f reference_point(0.0f, 0.0f); //基準点格納用
-    //cout << "int(sqrt(trans_corners.size())): " << int(sqrt(trans_corners.size())) << endl;
+    //(0, 0)に近い点から右並びにソート
+    vector<Point2f> sort_trans_centers; //ソートした点列用
+    vector<Point2f> range_centers; //range内に含まれる点列用
+    double range = sqrt(pow(trans_centers[0].x - trans_centers[1].x, 2) + pow(trans_centers[0].y - trans_centers[1].y, 2)); //x座標の小さい順にsortする際の点列の範囲の決定．この値は一時的
+    Point2f reference_point(0.0f, 0.0f); //基準点格納用
+    cout << "int(sqrt(trans_corners.size())): " << int(sqrt(trans_centers.size())) << endl;
 
-    //for (int i = 0; i < int(sqrt(trans_corners.size())); i++) {
-    //    reference_point = getClosestPoint(trans_corners, reference_point); //基準点に一番近い点を新たな基準点とする
-    //    range_corners = sortWithinRange(trans_corners, reference_point, range); //reference_pointを基準とし，rangeに含まれる点列をtrans_cornersから抽出し，x座標の小さい順にsortした結果を返す
-    //    //sort_trans_cornersに格納
-    //    for (const Point2f& corner : range_corners) {
-    //        sort_trans_corners.push_back(corner);
-    //    }
-    //    reference_point = Point2f(reference_point.x, reference_point.y + range); //基準点のy座標にrangeだけ足した座標に一番近い点を新たな基準点とする．
-    //}
-    //cout << "sort_trans_corners: " << sort_trans_corners << endl;
+    for (int i = 0; i < int(sqrt(trans_centers.size())); i++) {
+        reference_point = getClosestPoint(trans_centers, reference_point); //基準点に一番近い点を新たな基準点とする
+        range_centers = sortWithinRange(trans_centers, reference_point, range); //reference_pointを基準とし，rangeに含まれる点列をtrans_cornersから抽出し，x座標の小さい順にsortした結果を返す
+        //sort_trans_cornersに格納
+        for (const Point2f& corner : range_centers) {
+            sort_trans_centers.push_back(corner);
+        }
+        reference_point = Point2f(reference_point.x, reference_point.y + range); //基準点のy座標にrangeだけ足した座標に一番近い点を新たな基準点とする．
+    }
+    cout << "sort_trans_centers: " << sort_trans_centers << endl;
 
     //// 出力画像の作成
     vector<Point2f>::iterator it_corner = centers.begin();
