@@ -129,6 +129,23 @@ vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& referenc
      return centers;
  }
 
+ // 複数の座標値を入力とし，ある点とその他の点の最小距離を返す．
+ double decideRange(const vector<Point2f>& points) {
+     //基準点の決定
+     double x = points[0].x;
+     double y = points[0].y;
+     double distance;
+     double min_distance = 100000; //最小距離格納用
+
+     for (int i = 1; i < points.size(); i++) {
+         distance = sqrt(pow(x - points[i].x, 2) + pow(y - points[i].y, 2));
+         if (distance < min_distance) {
+             min_distance = distance;
+         }
+     }
+
+     return min_distance;
+ }
 
 
 int main()
@@ -221,22 +238,14 @@ int main()
         trans_pnt.y = trans_v;
         trans_centers[i] = trans_pnt;
     }
-
-    //y座標が小さい順にソート
-    sort(trans_centers.begin(), trans_centers.end(), [](const Point2f& a, const Point2f& b) {
-        return a.y < b.y;
-        });
-    //x座標が小さい順にソート
-    sort(trans_centers.begin(), trans_centers.end(), [](const Point2f& a, const Point2f& b) {
-        return (a.y == b.y) ? (a.x < b.x) : false;
-        });
     cout << "trans_centers: " << trans_centers << endl;
 
 
     //(0, 0)に近い点から右並びにソート
     vector<Point2f> sort_trans_centers; //ソートした点列用
     vector<Point2f> range_centers; //range内に含まれる点列用
-    double range = sqrt(pow(trans_centers[0].x - trans_centers[1].x, 2) + pow(trans_centers[0].y - trans_centers[1].y, 2)); //x座標の小さい順にsortする際の点列の範囲の決定．この値は一時的
+    double range = decideRange(trans_centers); //x座標の小さい順にsortする際の点列の範囲の決定．
+    cout << "range : " << range << endl;
     Point2f reference_point(0.0f, 0.0f); //基準点格納用
     cout << "int(sqrt(trans_corners.size())): " << int(sqrt(trans_centers.size())) << endl;
 
@@ -265,15 +274,11 @@ int main()
     ////ウインドウ生成
     namedWindow(win_src, WINDOW_AUTOSIZE);
     namedWindow("gray_img", WINDOW_AUTOSIZE);
-    namedWindow("dilated_img", WINDOW_AUTOSIZE);
-    namedWindow("eroded_img", WINDOW_AUTOSIZE);
     namedWindow("binary_img", WINDOW_AUTOSIZE);
     namedWindow("result_img", WINDOW_AUTOSIZE);
 
     imshow(win_src, img_src); //入力画像を表示
     imshow("gray_img", gray_img); //グレースケール画像を表示
-    //imshow("dilated_img", dilated_img); //膨張処理画像を表示
-    //imshow("eroded_img", eroded_img); //収縮処理画像を表示
     imshow("binary_img", binary_img); //2値化画像を表示
     imshow("result_img", result_img); //交点検出画像を表示
 
