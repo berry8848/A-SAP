@@ -4,6 +4,7 @@
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp> //画像入出力＆GUI操作用
+#include <opencv2/core/core.hpp> //識別子Point用
 #include <string> //csvファイル書き込み用
 #include <fstream> //csvファイル書き込み用
 #include <algorithm> //sort関数用
@@ -13,6 +14,7 @@ string win_src = "src";
 string win_dst = "dst";
 #define THRESHOLD 128
 #define NUMBER_OF_DOTS 25
+
 
 
 //reference_pointに一番近い点を返す関数
@@ -51,25 +53,84 @@ vector<Point2f> sortWithinRange(const vector<Point2f>& points, Point2f& referenc
 //背景領域を除いた領域のうち，上からNUMBER_OF_DOTS個だけ，大きい領域のラベル番号を抽出
  vector<int> extractLabels(Mat& matrix){
     vector<int> extract_labels(NUMBER_OF_DOTS); //抽出したラベル番号用．ドットの数だけ箱を用意．
-    int max_current = 1000000;
+    vector<int> used(matrix.rows, 0); // extract_labelsに追加する要素番目を1にする．これをしないと，面積が同じ値の領域を抽出することができない．
+    int max_current = 1000000; //この値以下の面積のうち最大の面積の領域を探索する．
     int dot_label_num = 0; //n番目に大きい要素のラベル番号格納用．
+
 
     for (int i = 0; i < NUMBER_OF_DOTS; i++){
         int max = 0;
         //背景領域（ラベル0）をのぞいたi番目に大きい要素を探索
         for (int j = 1; j < matrix.rows; j++) {
-            if (max < matrix.at<int>(j, 4) && matrix.at<int>(j, 4) < max_current)
+            if (max < matrix.at<int>(j, 4) && matrix.at<int>(j, 4) <= max_current && used[j] == 0)
             {  
                 max = matrix.at<int>(j, 4);
                 dot_label_num = j;
             }
         }
         extract_labels[i] = dot_label_num;
+        used[dot_label_num] = 1;
         max_current = matrix.at<int>(dot_label_num, 4);
     }
-    
+    for (int i = 0; i < used.size(); i++) {
+        std::cout << used[i] << " "; // 配列の要素を出力
+    }
+    std::cout << std::endl;
+
     return extract_labels;
 }
+
+ //抽出したラベル番号ごとに，そのラベル番号を満たす座標を抽出し，抽出した座標値の中心座標を返す
+ vector<Point2f> extractCenter(vector<int>& extract_labels, Mat& labels) {
+     Point2f center; //中心座標格納用
+     vector<Point2f> centers; //各ラベル番号の中心座標格納用
+     vector<Point> target_label_points; //各ラベル番号の中心座標格納用
+
+     for (int i = 0; i < extract_labels.size(); i++) {
+         int search_num = extract_labels[i];
+         //指定したラベル番号の座標値を探索
+         for (int y = 0; y < labels.rows; y++) {
+             for (int x = 0; x < labels.cols; x++) {
+                 if (labels.at<int>(y, x) == search_num) {
+                     target_label_points.push_back({ x, y });
+                     cout << "(x, y) = " << x << " , " << y << "  " << target_label_points.back() << endl;
+                 }
+             }
+         }
+         if (target_label_points.empty()) {
+             cout << "ERROR" << endl;
+             return { { 1.0, 0.0} };
+         }
+
+         center = calculateCenter(target_label_points); //中心座標を計算
+         centers.push_back(center);
+         target_label_points.clear(); //格納した座標値を消去
+     }
+     return centers;
+ }
+
+ //複数の座標値を入力とし，それらの中心座標を出力とする
+ Point2f calculateCenter(const vector<Point>& points) {
+     float centerX = 0.0;
+     float centerY = 0.0;
+
+     // 座標の合計を計算
+     for (const auto& point : points) {
+         centerX += point.x;
+         centerY += point.y;
+     }
+
+     // 座標の数で割って中心座標を求める
+     centerX /= points.size();
+     centerY /= points.size();
+
+     Point2f center;
+     center.x = centerX;
+     center.y = centerY;
+
+     return center;
+ }
+
 
 int main()
 {
@@ -81,41 +142,41 @@ int main()
     Mat img_src;
 
 
-    //カメラ使用時
-    VideoCapture capture(0);//カメラオープン
-    if (!capture.isOpened()) {
-        cout << "error" << endl;
-        return -1;
-    }
-    // 撮影画像サイズの設定
-    bool bres = capture.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
-    if (bres != true) {
-        return -1;
-    }
-    bres = capture.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
-    if (bres != true) {
-        return -1;
-    }
-    // 撮影画像取得高速化の工夫
-    bres = capture.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
-    if (bres != true) {
-        return -1;
-    }
-    //コーナー検出
-    // 参考：http://opencv.jp/opencv2-x-samples/corner_detection/
-    //１枚だけ写真を撮る ※現在，画像の読み込みに変更
-    capture >> img_src; //カメラ映像の読み込み
-    Mat result_img = img_src.clone(); //出力画像用 
-
-    //// 画像ファイル使用時
-    //string filename = "image.jpg";
-    //// 画像を読み込む
-    //img_src = imread(filename);
-    //if (img_src.empty()) {
-    //    cout << "Failed to load the image: " << filename << endl;
+    ////カメラ使用時
+    //VideoCapture capture(0);//カメラオープン
+    //if (!capture.isOpened()) {
+    //    cout << "error" << endl;
     //    return -1;
     //}
+    //// 撮影画像サイズの設定
+    //bool bres = capture.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
+    //if (bres != true) {
+    //    return -1;
+    //}
+    //bres = capture.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    //if (bres != true) {
+    //    return -1;
+    //}
+    //// 撮影画像取得高速化の工夫
+    //bres = capture.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+    //if (bres != true) {
+    //    return -1;
+    //}
+    ////コーナー検出
+    //// 参考：http://opencv.jp/opencv2-x-samples/corner_detection/
+    ////１枚だけ写真を撮る ※現在，画像の読み込みに変更
+    //capture >> img_src; //カメラ映像の読み込み
     //Mat result_img = img_src.clone(); //出力画像用 
+
+    // 画像ファイル使用時
+    string filename = "dot_image.jpg";
+    // 画像を読み込む
+    img_src = imread(filename);
+    if (img_src.empty()) {
+        cout << "Failed to load the image: " << filename << endl;
+        return -1;
+    }
+    Mat result_img = img_src.clone(); //出力画像用 
 
     //グレースケール変換
     Mat gray_img;
@@ -159,8 +220,13 @@ int main()
     vector<int> extract_labels = extractLabels(stats); //背景領域を除いた領域のうち，上からNUMBER_OF_DOTS個だけ，大きい領域のラベル番号を抽出
 
     for (int i = 0; i < extract_labels.size(); i++) {
-        cout << "extract_labels[i]: " << extract_labels[i] << endl;
+        cout << "extract_labels[" << i << "] : " << extract_labels[i] << endl;
     }
+
+
+    vector<Point2f> centers;
+    centers = extractCenter(extract_labels, labels);
+
 
     //// Mat型の各要素の値を表示
     //for (int i = 0; i < labels.rows; i++)
@@ -227,14 +293,14 @@ int main()
     //}
     //cout << "sort_trans_corners: " << sort_trans_corners << endl;
 
-    ////// 出力画像の作成
-    //vector<Point2f>::iterator it_corner = corners.begin();
-    //it_corner = corners.begin();
-    //for (; it_corner != corners.end(); ++it_corner) {
-    //    circle(result_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //関数の説明 http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
-    //    ofs_csv_file << it_corner->x << ", " << it_corner->y << endl;
-    //    circle(result_img, Point(it_corner->x, it_corner->y), 8, Scalar(0, 255, 0));
-    //}
+    //// 出力画像の作成
+    vector<Point2f>::iterator it_corner = centers.begin();
+    it_corner = centers.begin();
+    for (; it_corner != centers.end(); ++it_corner) {
+        circle(result_img, Point(it_corner->x, it_corner->y), 1, Scalar(0, 255, 0), -1); //関数の説明 http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
+        ofs_csv_file << it_corner->x << ", " << it_corner->y << endl;
+        circle(result_img, Point(it_corner->x, it_corner->y), 8, Scalar(0, 255, 0));
+    }
 
 
     //// 結果表示
@@ -244,14 +310,14 @@ int main()
     namedWindow("dilated_img", WINDOW_AUTOSIZE);
     namedWindow("eroded_img", WINDOW_AUTOSIZE);
     namedWindow("binary_img", WINDOW_AUTOSIZE);
-    //namedWindow("result_img", WINDOW_AUTOSIZE);
+    namedWindow("result_img", WINDOW_AUTOSIZE);
 
     imshow(win_src, img_src); //入力画像を表示
     imshow("gray_img", gray_img); //グレースケール画像を表示
     //imshow("dilated_img", dilated_img); //膨張処理画像を表示
     //imshow("eroded_img", eroded_img); //収縮処理画像を表示
     imshow("binary_img", binary_img); //2値化画像を表示
-    //imshow("result_img", result_img); //交点検出画像を表示
+    imshow("result_img", result_img); //交点検出画像を表示
 
     //// 画像を保存する
     //std::string filename1 = "gray_img.jpg";
@@ -266,6 +332,6 @@ int main()
 
     waitKey(0);
 
-    capture.release();
+    //capture.release();
     return 0;
 }
