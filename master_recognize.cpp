@@ -67,7 +67,7 @@ int main()
     //Mat result_img = img_src.clone(); //出力画像用 
 
     // 画像ファイルのパス
-    string filename = "image.jpg";
+    string filename = "master.jpg";
     // 画像を読み込む
     img_src = imread(filename);
     if (img_src.empty()) {
