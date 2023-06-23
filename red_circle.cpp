@@ -1,29 +1,27 @@
-//–Ú“IF“_’Tõ‚µC‚Ğ‚¸‚İ•â³ŠÖ”ì¬‚Ì€”õ “ñ’l‰»¨—Ìˆæ•ªŠ„¨ƒmƒCƒYœ‹¨ƒ‰ƒxƒ‹‚²‚Æ‚É’†SÀ•W‚ğ‹‚ß‚é¨À•W•ÏŠ·¨ƒ\[ƒg
+//ç›®çš„ï¼šç‚¹æ¢ç´¢ã—ï¼Œã²ãšã¿è£œæ­£é–¢æ•°ä½œæˆã®æº–å‚™ äºŒå€¤åŒ–â†’é ˜åŸŸåˆ†å‰²â†’ãƒã‚¤ã‚ºé™¤å»â†’ãƒ©ãƒ™ãƒ«ã”ã¨ã«ä¸­å¿ƒåº§æ¨™ã‚’æ±‚ã‚ã‚‹â†’åº§æ¨™å¤‰æ›â†’ã‚½ãƒ¼ãƒˆ
 
 #define _CRT_SECURE_NO_WORNINGS
 #define _USE_MATH_DEFINES
 #include <iostream>
 #include <cmath>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp> //‰æ‘œ“üo—Í•GUI‘€ì—p
-#include <opencv2/core/core.hpp> //¯•ÊqPoint—p
-#include <string> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <fstream> //csvƒtƒ@ƒCƒ‹‘‚«‚İ—p
-#include <algorithm> //sortŠÖ”—p
+#include <opencv2/highgui/highgui.hpp> //ç”»åƒå…¥å‡ºåŠ›ï¼†GUIæ“ä½œç”¨
+//#include <opencv2/core/core.hpp> //è­˜åˆ¥å­Pointç”¨
+#include <string> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <fstream> //csvãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ç”¨
+#include <algorithm> //sorté–¢æ•°ç”¨
 using namespace std;
 using namespace cv;
 string win_src = "src";
 string win_dst = "dst";
-#define THRESHOLD 128
-#define NUMBER_OF_DOTS 1
 
 
-//”wŒi—Ìˆæ‚ğœ‚¢‚½—Ìˆæ‚Ì‚¤‚¿CÅ‚à‘å‚«‚¢—Ìˆæ‚Ìƒ‰ƒxƒ‹”Ô†‚ğ’Šo
+//èƒŒæ™¯é ˜åŸŸã‚’é™¤ã„ãŸé ˜åŸŸã®ã†ã¡ï¼Œæœ€ã‚‚å¤§ãã„é ˜åŸŸã®ãƒ©ãƒ™ãƒ«ç•ªå·ã‚’æŠ½å‡º
 int circleLabels(Mat& matrix) {
-    int label_num = 0; //n”Ô–Ú‚É‘å‚«‚¢—v‘f‚Ìƒ‰ƒxƒ‹”Ô†Ši”[—pD
-    int max = 0; //Å‘å–ÊÏŠi”[—p
+    int label_num = 0; //nç•ªç›®ã«å¤§ãã„è¦ç´ ã®ãƒ©ãƒ™ãƒ«ç•ªå·æ ¼ç´ç”¨ï¼
+    int max = 0; //æœ€å¤§é¢ç©æ ¼ç´ç”¨
 
-    //”wŒi—Ìˆæiƒ‰ƒxƒ‹0j‚ğ‚Ì‚¼‚¢‚½i”Ô–Ú‚É‘å‚«‚¢—v‘f‚ğ’Tõ
+    //èƒŒæ™¯é ˜åŸŸï¼ˆãƒ©ãƒ™ãƒ«0ï¼‰ã‚’ã®ãã„ãŸiç•ªç›®ã«å¤§ãã„è¦ç´ ã‚’æ¢ç´¢
     for (int j = 1; j < matrix.rows; j++) {
         if (max < matrix.at<int>(j, 4))
         {
@@ -34,18 +32,18 @@ int circleLabels(Mat& matrix) {
     return label_num;
 }
 
-//•¡”‚ÌÀ•W’l‚ğ“ü—Í‚Æ‚µC‚»‚ê‚ç‚Ì’†SÀ•W‚ğo—Í‚Æ‚·‚é
+//è¤‡æ•°ã®åº§æ¨™å€¤ã‚’å…¥åŠ›ã¨ã—ï¼Œãã‚Œã‚‰ã®ä¸­å¿ƒåº§æ¨™ã‚’å‡ºåŠ›ã¨ã™ã‚‹
 Point2f calculateCenter(const vector<Point>& points) {
     float centerX = 0.0;
     float centerY = 0.0;
 
-    // À•W‚Ì‡Œv‚ğŒvZ
+    // åº§æ¨™ã®åˆè¨ˆã‚’è¨ˆç®—
     for (const auto& point : points) {
         centerX += point.x;
         centerY += point.y;
     }
 
-    // À•W‚Ì”‚ÅŠ„‚Á‚Ä’†SÀ•W‚ğ‹‚ß‚é
+    // åº§æ¨™ã®æ•°ã§å‰²ã£ã¦ä¸­å¿ƒåº§æ¨™ã‚’æ±‚ã‚ã‚‹
     centerX /= points.size();
     centerY /= points.size();
 
@@ -57,12 +55,12 @@ Point2f calculateCenter(const vector<Point>& points) {
 }
 
 
-//’Šo‚µ‚½ƒ‰ƒxƒ‹”Ô†‚²‚Æ‚ÉC‚»‚Ìƒ‰ƒxƒ‹”Ô†‚ğ–‚½‚·À•W‚ğ’Šo‚µC’Šo‚µ‚½À•W’l‚Ì’†SÀ•W‚ğ•Ô‚·
+//æŠ½å‡ºã—ãŸãƒ©ãƒ™ãƒ«ç•ªå·ã”ã¨ã«ï¼Œãã®ãƒ©ãƒ™ãƒ«ç•ªå·ã‚’æº€ãŸã™åº§æ¨™ã‚’æŠ½å‡ºã—ï¼ŒæŠ½å‡ºã—ãŸåº§æ¨™å€¤ã®ä¸­å¿ƒåº§æ¨™ã‚’è¿”ã™
 Point2f circleCenter(int circle_labels, Mat& labels) {
-    Point2f center; //’†SÀ•WŠi”[—p
-    vector<Point> target_label_points; //ƒ‰ƒxƒ‹”Ô†‚ğ–‚½‚·À•WŠi”[—p
+    Point2f center; //ä¸­å¿ƒåº§æ¨™æ ¼ç´ç”¨
+    vector<Point> target_label_points; //ãƒ©ãƒ™ãƒ«ç•ªå·ã‚’æº€ãŸã™åº§æ¨™æ ¼ç´ç”¨
 
-    //w’è‚µ‚½ƒ‰ƒxƒ‹”Ô†‚ÌÀ•W’l‚ğ’Tõ
+    //æŒ‡å®šã—ãŸãƒ©ãƒ™ãƒ«ç•ªå·ã®åº§æ¨™å€¤ã‚’æ¢ç´¢
     for (int y = 0; y < labels.rows; y++) {
         for (int x = 0; x < labels.cols; x++) {
             if (labels.at<int>(y, x) == circle_labels) {
@@ -71,27 +69,27 @@ Point2f circleCenter(int circle_labels, Mat& labels) {
             }
         }
     }
-    center = calculateCenter(target_label_points); //’†SÀ•W‚ğŒvZ
+    center = calculateCenter(target_label_points); //ä¸­å¿ƒåº§æ¨™ã‚’è¨ˆç®—
     return center;
 }
 
 
 int main()
 {
-    //ƒtƒ@ƒCƒ‹‘‚«‚İ
-    string output_csv_file_path = "Output/result.csv";
-    // ‘‚«‚Şcsvƒtƒ@ƒCƒ‹‚ğŠJ‚­(std::ofstream‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^‚ÅŠJ‚­)
+    //ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿
+    string output_csv_file_path = "result.csv";
+    // æ›¸ãè¾¼ã‚€csvãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã(std::ofstreamã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã§é–‹ã)
     ofstream ofs_csv_file(output_csv_file_path);
 
     Mat img_src;
 
-    ////ƒJƒƒ‰g—p
-    //VideoCapture capture(0);//ƒJƒƒ‰ƒI[ƒvƒ“
+    ////ã‚«ãƒ¡ãƒ©ä½¿ç”¨æ™‚
+    //VideoCapture capture(0);//ã‚«ãƒ¡ãƒ©ã‚ªãƒ¼ãƒ—ãƒ³
     //if (!capture.isOpened()) {
     //    cout << "error" << endl;
     //    return -1;
     //}
-    //// B‰e‰æ‘œƒTƒCƒY‚Ìİ’è
+    //// æ’®å½±ç”»åƒã‚µã‚¤ã‚ºã®è¨­å®š
     //bool bres = capture.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
     //if (bres != true) {
     //    return -1;
@@ -100,85 +98,68 @@ int main()
     //if (bres != true) {
     //    return -1;
     //}
-    //// B‰e‰æ‘œæ“¾‚‘¬‰»‚ÌH•v
+    //// æ’®å½±ç”»åƒå–å¾—é«˜é€ŸåŒ–ã®å·¥å¤«
     //bres = capture.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
     //if (bres != true) {
     //    return -1;
     //}
-    ////ƒR[ƒi[ŒŸo
-    //// QlFhttp://opencv.jp/opencv2-x-samples/corner_detection/
-    ////‚P–‡‚¾‚¯Ê^‚ğB‚é ¦Œ»İC‰æ‘œ‚Ì“Ç‚İ‚İ‚É•ÏX
-    //capture >> img_src; //ƒJƒƒ‰‰f‘œ‚Ì“Ç‚İ‚İ
-    //Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    ////ã‚³ãƒ¼ãƒŠãƒ¼æ¤œå‡º
+    //// å‚è€ƒï¼šhttp://opencv.jp/opencv2-x-samples/corner_detection/
+    ////ï¼‘æšã ã‘å†™çœŸã‚’æ’®ã‚‹ â€»ç¾åœ¨ï¼Œç”»åƒã®èª­ã¿è¾¼ã¿ã«å¤‰æ›´
+    //capture >> img_src; //ã‚«ãƒ¡ãƒ©æ˜ åƒã®èª­ã¿è¾¼ã¿
+    //Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
 
-    // ‰æ‘œƒtƒ@ƒCƒ‹g—p
+    // ç”»åƒãƒ•ã‚¡ã‚¤ãƒ«ä½¿ç”¨æ™‚
     string filename = "red_circle.jpg";
-    // ‰æ‘œ‚ğ“Ç‚İ‚Ş
+    // ç”»åƒã‚’èª­ã¿è¾¼ã‚€
     img_src = imread(filename);
     if (img_src.empty()) {
         cout << "Failed to load the image: " << filename << endl;
         return -1;
     }
-    Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
 
-     // ‰æ‘œ‚ğHSVF‹óŠÔ‚É•ÏŠ·
+     // ç”»åƒã‚’HSVè‰²ç©ºé–“ã«å¤‰æ›
     Mat hsvImage;
     cvtColor(img_src, hsvImage, cv::COLOR_BGR2HSV);
 
-    // ÔF‚Ì”ÍˆÍ‚ğ’è‹`
+    // èµ¤è‰²ã®ç¯„å›²ã‚’å®šç¾©
     Scalar lowerRed(0, 100, 100);
     Scalar upperRed(10, 255, 255);
     Scalar lowerRed2(170, 100, 100);
     Scalar upperRed2(180, 255, 255);
 
-    // ÔF—Ìˆæ‚ğ’Šo
+    // èµ¤è‰²é ˜åŸŸã‚’æŠ½å‡º
     Mat redMask1, redMask2, redMask, redImage;
     inRange(hsvImage, lowerRed, upperRed, redMask1);
     inRange(hsvImage, lowerRed2, upperRed2, redMask2);
     add(redMask1, redMask2, redMask);
 
-    //—Ìˆæ•ªŠ„
+    //é ˜åŸŸåˆ†å‰²
     Mat labels, stats, centroids;
     int num_objects = connectedComponentsWithStats(redMask, labels, stats, centroids);
     cout << "labels.at<int>(200, 100): " << labels.at<int>(200, 100) << endl;
     cout << "labels.at<int>(0, 0): " << labels.at<int>(0, 0) << endl;
     cout << "stats: " << stats << endl;
 
-    int circle_labels = circleLabels(stats); //”wŒi—Ìˆæ‚ğœ‚¢‚½—Ìˆæ‚Ì‚¤‚¿CÅ‚à‘å‚«‚¢—Ìˆæ‚Ìƒ‰ƒxƒ‹”Ô†‚ğ’Šo
+    int circle_labels = circleLabels(stats); //èƒŒæ™¯é ˜åŸŸã‚’é™¤ã„ãŸé ˜åŸŸã®ã†ã¡ï¼Œæœ€ã‚‚å¤§ãã„é ˜åŸŸã®ãƒ©ãƒ™ãƒ«ç•ªå·ã‚’æŠ½å‡º
 
     cout << "circle_labels : " << circle_labels << endl;
 
     Point2f center;
-    center = circleCenter(circle_labels, labels); //’Šo‚µ‚½ƒ‰ƒxƒ‹”Ô†‚²‚Æ‚ÉC‚»‚Ìƒ‰ƒxƒ‹”Ô†‚ğ–‚½‚·À•W‚ğ’Šo‚µC’Šo‚µ‚½À•W’l‚Ì’†SÀ•W‚ğ•Ô‚·D
+    center = circleCenter(circle_labels, labels); //æŠ½å‡ºã—ãŸãƒ©ãƒ™ãƒ«ç•ªå·ã”ã¨ã«ï¼Œãã®ãƒ©ãƒ™ãƒ«ç•ªå·ã‚’æº€ãŸã™åº§æ¨™ã‚’æŠ½å‡ºã—ï¼ŒæŠ½å‡ºã—ãŸåº§æ¨™å€¤ã®ä¸­å¿ƒåº§æ¨™ã‚’è¿”ã™ï¼
 
-    ////À•W•ÏŠ·((u, v)¨(u, height - v))
-    //float height = img_src.rows;
-    //cout << "height: " << height << endl;
-    //vector<Point2f> trans_centers(centers.size());
-    //for (int i = 0; i < centers.size(); i++) {
-    //    Point2f origin_pnt = centers[i];
-    //    double u = origin_pnt.x;
-    //    double v = origin_pnt.y;
-    //    double trans_u = u;
-    //    double trans_v = height - v;
-    //    Point2f trans_pnt;
-    //    trans_pnt.x = trans_u;
-    //    trans_pnt.y = trans_v;
-    //    trans_centers[i] = trans_pnt;
-    //}
-    //cout << "trans_centers: " << trans_centers << endl;
-
-    // o—Í‰æ‘œ‚Ìì¬
-    circle(result_img, Point(center.x, center.y), 1, Scalar(0, 255, 0), -1); //ŠÖ”‚Ìà–¾ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
+    // å‡ºåŠ›ç”»åƒã®ä½œæˆ
+    circle(result_img, Point(center.x, center.y), 1, Scalar(0, 255, 0), -1); //é–¢æ•°ã®èª¬æ˜ http://opencv.jp/opencv-2svn/cpp/drawing_functions.html
     circle(result_img, Point(center.x, center.y), 8, Scalar(0, 255, 0));
-    ofs_csv_file << center.x << ", " << center.y << endl; //csvƒtƒ@ƒCƒ‹o—Í
+    ofs_csv_file << center.x << ", " << center.y << endl; //csvãƒ•ã‚¡ã‚¤ãƒ«å‡ºåŠ›
 
-    // Œ‹‰Ê•\¦
-    imshow(win_src, img_src); //“ü—Í‰æ‘œ‚ğ•\¦
-    imshow("Red Image", redMask); // ÔF—Ìˆæ‚Ì•\¦
-    imshow("result_img", result_img); //Œğ“_ŒŸo‰æ‘œ‚ğ•\¦
+    // çµæœè¡¨ç¤º
+    imshow(win_src, img_src); //å…¥åŠ›ç”»åƒã‚’è¡¨ç¤º
+    imshow("Red Image", redMask); // èµ¤è‰²é ˜åŸŸã®è¡¨ç¤º
+    imshow("result_img", result_img); //äº¤ç‚¹æ¤œå‡ºç”»åƒã‚’è¡¨ç¤º
 
-    //// ‰æ‘œ‚ğ•Û‘¶‚·‚é
+    //// ç”»åƒã‚’ä¿å­˜ã™ã‚‹
     //std::string filename1 = "gray_img.jpg";
     //std::string filename2 = "gaussian_img.jpg";
     //std::string filename3 = "laplacian_img_abs.jpg";
