@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp> //‰æ‘œ“üo—Í•GUI‘€ì—p
+#include <opencv2/highgui/highgui.hpp> //ç”»åƒå…¥å‡ºåŠ›ï¼†GUIæ“ä½œç”¨
 using namespace std;
 using namespace cv;
 string win_src = "src";
@@ -13,57 +13,58 @@ string win_dst = "dst";
 int main()
 {
     Mat img_src;
-    //VideoCapture capture(0);//ƒJƒƒ‰ƒI[ƒvƒ“
+    //VideoCapture capture(0);//ã‚«ãƒ¡ãƒ©ã‚ªãƒ¼ãƒ—ãƒ³
     //if (!capture.isOpened()) {
     //    cout << "error" << endl;
     //    return -1;
     //}
-    ////ƒR[ƒi[ŒŸo
-    //// QlFhttp://opencv.jp/opencv2-x-samples/corner_detection/
-    ////‚P–‡‚¾‚¯Ê^‚ğB‚é ¦Œ»İC‰æ‘œ‚Ì“Ç‚İ‚İ‚É•ÏX
-    //capture >> img_src; //ƒJƒƒ‰‰f‘œ‚Ì“Ç‚İ‚İ
-    //Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    ////ã‚³ãƒ¼ãƒŠãƒ¼æ¤œå‡º
+    //// å‚è€ƒï¼šhttp://opencv.jp/opencv2-x-samples/corner_detection/
+    ////ï¼‘æšã ã‘å†™çœŸã‚’æ’®ã‚‹ â€»ç¾åœ¨ï¼Œç”»åƒã®èª­ã¿è¾¼ã¿ã«å¤‰æ›´
+    //capture >> img_src; //ã‚«ãƒ¡ãƒ©æ˜ åƒã®èª­ã¿è¾¼ã¿
+    //Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
 
-    // ‰æ‘œƒtƒ@ƒCƒ‹‚ÌƒpƒX
+    // ç”»åƒãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹
     string filename = "master.jpg";
-    // ‰æ‘œ‚ğ“Ç‚İ‚Ş
+    // ç”»åƒã‚’èª­ã¿è¾¼ã‚€
     img_src = imread(filename);
     if (img_src.empty()) {
         cout << "Failed to load the image: " << filename << endl;
         return -1;
     }
-    Mat result_img = img_src.clone(); //o—Í‰æ‘œ—p 
+    Mat result_img = img_src.clone(); //å‡ºåŠ›ç”»åƒç”¨ 
 
-    //ƒOƒŒ[ƒXƒP[ƒ‹•ÏŠ·
+    //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«å¤‰æ›
     Mat gray_img;
     cvtColor(img_src, gray_img, COLOR_BGR2GRAY);
 
-    //ƒKƒEƒVƒAƒ“ƒtƒBƒ‹ƒ^‚Ì“K—p
+    //ã‚¬ã‚¦ã‚·ã‚¢ãƒ³ãƒ•ã‚£ãƒ«ã‚¿ã®é©ç”¨
     Mat gaussian_img;
     GaussianBlur(gray_img, gaussian_img, Size(3, 3), 0, 0);
 
-    //ƒOƒŒ[ƒXƒP[ƒ‹‰æ‘œ‚É‘Î‚µ‚Ä2’l‰»
+    //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ç”»åƒã«å¯¾ã—ã¦2å€¤åŒ–
     Mat binary_img;
     threshold(gaussian_img, binary_img, 128, 255, THRESH_BINARY);
 
-    //‰æ‘f’l‚ğ”½“]D”½“]‚µ‚È‚¢‚ÆƒEƒCƒ“ƒhƒE‘S‘Ì‚ª—ÖŠs”F¯‚³‚ê‚éD
+    //ç”»ç´ å€¤ã‚’åè»¢ï¼åè»¢ã—ãªã„ã¨ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦å…¨ä½“ãŒè¼ªéƒ­èªè­˜ã•ã‚Œã‚‹ï¼
     Mat inverted_binary_img = 255 - binary_img;
 
-    // —ÖŠs‚ğŠi”[‚·‚éƒxƒNƒgƒ‹
+    // è¼ªéƒ­ã‚’æ ¼ç´ã™ã‚‹ãƒ™ã‚¯ãƒˆãƒ«
     vector<vector<Point>> contours;
-    vector<Vec4i> hierarchy; //Vec4i‚ÍŠK‘wî•ñ‚ğ•\Œ»‚·‚é‚½‚ß‚Ég—p‚³‚ê‚éƒf[ƒ^Œ^DŠe—v‘f‚ÍŠK‘wî•ñ‚ÌˆÙ‚È‚é‘¤–Ê‚ğ•\‚·D
+    vector<Vec4i> hierarchy; //Vec4iã¯éšå±¤æƒ…å ±ã‚’è¡¨ç¾ã™ã‚‹ãŸã‚ã«ä½¿ç”¨ã•ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿å‹ï¼å„è¦ç´ ã¯éšå±¤æƒ…å ±ã®ç•°ãªã‚‹å´é¢ã‚’è¡¨ã™ï¼
 
-    // —ÖŠs’Šo
-    findContours(inverted_binary_img, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_TC89_L1); //RETR_EXTERNAL:ˆê”ÔŠO‘¤‚Ì”’—ÖŠs‚ğæ‚èo‚·
+    // è¼ªéƒ­æŠ½å‡º
+    findContours(inverted_binary_img, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_TC89_L1); //RETR_EXTERNAL:ä¸€ç•ªå¤–å´ã®ç™½è¼ªéƒ­ã‚’å–ã‚Šå‡ºã™
 
-    // contours‚Ì—v‘f‚ğ•\¦
+    // contoursã®è¦ç´ ã‚’è¡¨ç¤º
     for (const auto& contour : contours) {
         for (const auto& point : contour) {
             cout << "(" << point.x << ", " << point.y << ") " << endl;
         }
+        cout << "    " << endl;
     }
 
-    // hierarchy‚ğ•\¦
+    // hierarchyã‚’è¡¨ç¤º
     for (int i = 0; i < contours.size(); i++) {
         cout << "Contour " << i << ", Hierarchy: "
             << ", Next: " << hierarchy[i][0]
@@ -73,16 +74,16 @@ int main()
             << endl;
     }
 
-    // —ÖŠs‚Ì•`‰æ
+    // è¼ªéƒ­ã®æç”»
     drawContours(result_img, contours, -1, Scalar(0, 0, 255), 2);
 
 
-    // Œ‹‰Ê•\¦
-    imshow(win_src, img_src); //“ü—Í‰æ‘œ‚ğ•\¦
-    //imshow("gray_img", gray_img); //ƒOƒŒ[ƒXƒP[ƒ‹‰æ‘œ‚ğ•\¦
-    //imshow("gaussian_img", gaussian_img); //•½’R‰»‰æ‘œ‚ğ•\¦
-    imshow("inverted_binary_img", inverted_binary_img); //“ñ’l‰»”½“]‰æ‘œ‚ğ•\¦
-    imshow("result_img", result_img); //—ÖŠs’ŠoŒ‹‰Ê‚ğ•\¦
+    // çµæœè¡¨ç¤º
+    imshow(win_src, img_src); //å…¥åŠ›ç”»åƒã‚’è¡¨ç¤º
+    //imshow("gray_img", gray_img); //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ç”»åƒã‚’è¡¨ç¤º
+    //imshow("gaussian_img", gaussian_img); //å¹³å¦åŒ–ç”»åƒã‚’è¡¨ç¤º
+    imshow("inverted_binary_img", inverted_binary_img); //äºŒå€¤åŒ–åè»¢ç”»åƒã‚’è¡¨ç¤º
+    imshow("result_img", result_img); //è¼ªéƒ­æŠ½å‡ºçµæœã‚’è¡¨ç¤º
 
 
     waitKey(0);
