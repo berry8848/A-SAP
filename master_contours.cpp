@@ -69,8 +69,8 @@ int main()
         cout << "Contour " << i << ", Hierarchy: "
             << ", Next: " << hierarchy[i][0]
             << ", Previous: " << hierarchy[i][1]
-            << ", Child: " << hierarchy[i][2] 
-            << "Parent: " << hierarchy[i][3] 
+            << ", Child: " << hierarchy[i][2]
+            << "Parent: " << hierarchy[i][3]
             << endl;
     }
 
@@ -85,6 +85,17 @@ int main()
     imshow("inverted_binary_img", inverted_binary_img); //二値化反転画像を表示
     imshow("result_img", result_img); //輪郭抽出結果を表示
 
+    // 画像を保存する
+    std::string filename1 = "gray_img.jpg";
+    std::string filename2 = "gaussian_img.jpg";
+    std::string filename3 = "binary_img.jpg";
+    std::string filename4 = "inverted_binary_img.jpg";
+    std::string filename5 = "result_img.jpg";
+    bool success1 = cv::imwrite(filename1, gray_img);
+    bool success2 = cv::imwrite(filename2, gaussian_img);
+    bool success3 = cv::imwrite(filename3, binary_img);
+    bool success4 = cv::imwrite(filename4, inverted_binary_img);
+    bool success5 = cv::imwrite(filename5, result_img);
 
     waitKey(0);
 
