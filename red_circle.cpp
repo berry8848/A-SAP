@@ -28,7 +28,7 @@ int circleLabels(Mat& matrix) {
             max = matrix.at<int>(j, 4);
             label_num = j;
         }
-    }    
+    }
     return label_num;
 }
 
@@ -159,15 +159,15 @@ int main()
     imshow("Red Image", redMask); // 赤色領域の表示
     imshow("result_img", result_img); //交点検出画像を表示
 
-    //// 画像を保存する
-    //std::string filename1 = "gray_img.jpg";
-    //std::string filename2 = "gaussian_img.jpg";
+    // 画像を保存する
+    std::string filename1 = "hsvImage.jpg";
+    std::string filename2 = "redMask.jpg";
     //std::string filename3 = "laplacian_img_abs.jpg";
-    //std::string filename4 = "result_img.jpg";
-    //bool success1 = cv::imwrite(filename1, gray_img);
-    //bool success2 = cv::imwrite(filename2, gaussian_img);
+    std::string filename4 = "result_img.jpg";
+    bool success1 = cv::imwrite(filename1, hsvImage);
+    bool success2 = cv::imwrite(filename2, redMask);
     //bool success3 = cv::imwrite(filename3, laplacian_img_abs);
-    //bool success4 = cv::imwrite(filename4, result_img);
+    bool success4 = cv::imwrite(filename4, result_img);
 
     waitKey(0);
 
